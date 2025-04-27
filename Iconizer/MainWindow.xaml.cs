@@ -88,27 +88,46 @@ public partial class MainWindow : Window
     private void BtButton_OnClick(object sender, RoutedEventArgs e)
     {
         var config = new ConfigData();
+
+        int i = 0;
         foreach (ClearTextBox tb in FilesPanel.Children)
         {
+            bool fail = false;
             switch (tb.MyTextBox.Text)
             {
                 case ".cpp":
+                case ".js":
                 case ".jsx":
                 case "package.json":
                 case ".py":
                 case "config.toml":
+                case "bunfig.toml":
+                case "deno.json":
                 case ".ts":
-                    config.Files.Add(tb.MyTextBox.Text);
+                case ".tsx":
+                case ".yml":
+                case ".json":
+                case ".lock":
+                case ".png":
+                    break;
+                default:
+                    fail = true;
                     break;
             }
-        }
 
-        foreach (ClearTextBox tb in InputsPanel.Children)
-        {
-            if (File.Exists(tb.MyTextBox.Text))
+            var tc = InputsPanel.Children[i] as ClearTextBox;
+            if (!File.Exists(tc.MyTextBox.Text))
             {
-                config.Icons.Add(tb.MyTextBox.Text);
+                fail = true;
             }
+
+            if (!fail)
+            {
+                config.Files.Add(tb.MyTextBox.Text);
+                config.Icons.Add(tc.MyTextBox.Text);
+            }
+
+            i++;
         }
 
         string json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
@@ -157,20 +176,20 @@ public partial class MainWindow : Window
                                 File.WriteAllText(desktopinitPath, initContect, Encoding.Unicode);
                                 File.SetAttributes($"{folder}\\iconizer-{Path.GetFileName(config.Icons[i])}",
                                     FileAttributes.Hidden | FileAttributes.System);
-                                
+
                                 File.SetAttributes(desktopinitPath, FileAttributes.Hidden | FileAttributes.System);
                                 File.SetAttributes(folder, File.GetAttributes(folder) | FileAttributes.System);
                                 Directory.SetLastWriteTime(folder, DateTime.Now);
-                                
+
                                 //Reloading
                                 SHChangeNotify(0x08000000, 0x0000, folder, (IntPtr)null);
                                 await Task.Delay(2000);
-                                
-                                File.SetAttributes(folder, File.GetAttributes(folder)  | FileAttributes.ReadOnly);
-                                
-                                File.SetAttributes(folder, File.GetAttributes(folder)  &  ~FileAttributes.System);
 
-                        
+                                File.SetAttributes(folder, File.GetAttributes(folder) | FileAttributes.ReadOnly);
+
+                                File.SetAttributes(folder, File.GetAttributes(folder) & ~FileAttributes.System);
+
+
                                 break;
                             }
 
@@ -191,10 +210,14 @@ public partial class MainWindow : Window
     {
         ClearTextBox tb = new ClearTextBox();
         InputsPanel.Children.Add(tb);
+        ClearTextBox tc = new ClearTextBox();
+        FilesPanel.Children.Add(tc);
     }
 
     private void AddFile_OnClick(object sender, RoutedEventArgs e)
     {
+        ClearTextBox tc = new ClearTextBox();
+        InputsPanel.Children.Add(tc);
         ClearTextBox tb = new ClearTextBox();
         FilesPanel.Children.Add(tb);
     }
