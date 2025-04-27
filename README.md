@@ -42,14 +42,16 @@ Iconizer/
 ### Prerequisites
 
 - Windows 10/11
-- .NET 9.0 or higher
+- .NET 7.0 or higher
 - JetBrains Rider or Visual Studio 2022 (for development)
 
 ### Installation
 
-1. Download the latest release from the [Releases](https://github.com/NexusOnePlus/iconizer/releases) page
-2. Run the installer and follow the on-screen instructions
-3. Launch Iconizer from the Start menu
+Iconizer is currently in development. To try it out:
+
+1. Clone the repository
+2. Build the application from source following the developer instructions below
+3. We'll provide installer packages once we reach our first release
 
 ### For Developers
 
@@ -105,9 +107,19 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 - **[NexusOnePlus](https://github.com/NexusOnePlus)** - Project Owner
 - **[cenixeriadev](https://github.com/cenixeriadev)** - Collaborator
 
+## Security
+
+Please see our [SECURITY.md](SECURITY.md) file for information on reporting security vulnerabilities.
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- [DevIcons](https://devicon.dev/) for programming language icons
+- [Simple Icons](https://simpleicons.org/) for application icons
+- All contributors who have helped shape Iconizer
 
 ## Support
 
