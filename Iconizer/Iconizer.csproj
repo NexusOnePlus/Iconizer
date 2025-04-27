@@ -8,4 +8,15 @@
         <UseWPF>true</UseWPF>
     </PropertyGroup>
 
+    <ItemGroup>
+      <Page Update="Presentation\View\UserControls\ClearTextBox.xaml">
+        <Generator>MSBuild:Compile</Generator>
+      </Page>
+      <Page Update="Presentation\MainWindow.xaml">
+        <Generator>MSBuild:Compile</Generator>
+        <XamlRuntime>Wpf</XamlRuntime>
+        <SubType>Designer</SubType>
+      </Page>
+    </ItemGroup>
+
 </Project>

@@ -1,12 +1,12 @@
 ﻿using System.Text;
 using System.Windows;
 using System.IO;
-using Iconizer.View.UserControls;
+using Iconizer.Presentation.View.UserControls;
 using System.Text.Json;
 using Path = System.IO.Path;
 using System.Runtime.InteropServices;
 
-namespace Iconizer;
+namespace Iconizer.Presentation;
 
 /// <summary>
 /// Interaction logic for MainWindow.xaml
