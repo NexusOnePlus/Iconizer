@@ -115,11 +115,6 @@ Please see our [SECURITY.md](SECURITY.md) file for information on reporting secu
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Acknowledgments
-
-- [DevIcons](https://devicon.dev/) for programming language icons
-- [Simple Icons](https://simpleicons.org/) for application icons
-- All contributors who have helped shape Iconizer
 
 ## Support
 
