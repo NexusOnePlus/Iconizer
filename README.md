@@ -42,7 +42,7 @@ Iconizer/
 ### Prerequisites
 
 - Windows 10/11
-- .NET 7.0 or higher
+- .NET 9.0 or higher
 - JetBrains Rider or Visual Studio 2022 (for development)
 
 ### Installation
@@ -123,4 +123,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Support
 
-If you encounter any issues or have questions, please [open an issue](https://github.com/NexusOnePlus/iconizer/issues) on GitHub.
+If you encounter any issues or have questions, please [open an issue](https://github.com/NexusOnePlus/Iconizer/issues) on GitHub.
