@@ -5,13 +5,35 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:Iconizer.Presentation.View.UserControls"
              mc:Ignorable="d"
-             d:DesignHeight="30" d:DesignWidth="300">
-
-    <TextBox
-        Name="MyTextBox"
-        VerticalAlignment="Center" Margin="20,10" Height="30"
-        FontSize="14"
-        BorderThickness="0,0,1,0"
-        FontWeight="Light" />
+             d:DesignHeight="50" d:DesignWidth="500">
+    <Border CornerRadius="12" Background="#27262b" Margin="0,10">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="40*"/>
+                <ColumnDefinition Width="10*"/>
+                <ColumnDefinition Width="40*"/>
+            </Grid.ColumnDefinitions>
+            <TextBox
+                Name="MyTextBox"
+                VerticalAlignment="Center" Margin="20,10" Height="30"
+                FontSize="14"
+                BorderThickness="0,0,1,0"
+                FontWeight="Light" />
+            <Button Grid.Column="1"
+                    Name="DeleteButton"
+                    Background="#c55456"
+                    Content="Delete"
+                    VerticalAlignment="Center"
+                    Click="DeleteButton_OnClick"
+                    HorizontalAlignment="Center" />
+            <TextBox
+                Grid.Column="2"
+                Name="IconInput"
+                VerticalAlignment="Center" Margin="20,10" Height="30"
+                FontSize="14"
+                BorderThickness="0,0,1,0"
+                FontWeight="Light" />
+        </Grid>
+    </Border>
 
 </UserControl>

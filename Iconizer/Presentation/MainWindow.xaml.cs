@@ -34,10 +34,10 @@ public partial class MainWindow : Window
             Directory.CreateDirectory(FolderPath);
         }
 
-        loadConfig();
+        LoadConfig();
     }
 
-    private void loadConfig()
+    private void LoadConfig()
     {
         if (File.Exists(ConfigPath))
         {
@@ -46,82 +46,35 @@ public partial class MainWindow : Window
 
             if (config != null)
             {
-                FilesPanel.Children.Clear();
                 InputsPanel.Children.Clear();
-
+                var i = 0;
                 foreach (var file in config.Files)
                 {
                     var tb = new ClearTextBox();
                     tb.MyTextBox.Text = file;
-                    FilesPanel.Children.Add(tb);
-                }
-
-                foreach (var file in config.Icons)
-                {
-                    var tb = new ClearTextBox();
-                    tb.MyTextBox.Text = file;
+                    tb.IconInput.Text = config.Icons[i];
+                    tb.RequestRemove += (s, args) =>
+                    {
+                        InputsPanel.Children.Remove((tb));
+                    };
                     InputsPanel.Children.Add(tb);
+                    i++;
                 }
             }
         }
         else
         {
-            for (int i = 0; i < 5; i++)
+            for (var i = 0; i < 5; i++)
             {
-                FilesPanel.Children.Add(new ClearTextBox());
-                InputsPanel.Children.Add(new ClearTextBox());
+              //  FilesPanel.Children.Add(new ClearTextBox());
+              var tb = new ClearTextBox();
+              tb.RequestRemove += (s, args) =>
+              {
+                  InputsPanel.Children.Remove((tb));
+              };
+                InputsPanel.Children.Add(tb);
             }
         }
-    }
-
-    private void BtButton_OnClick(object sender, RoutedEventArgs e)
-    {
-        var config = new ConfigData();
-
-        int i = 0;
-        foreach (ClearTextBox tb in FilesPanel.Children)
-        {
-            bool fail = false;
-            switch (tb.MyTextBox.Text)
-            {
-                case ".cpp":
-                case ".js":
-                case ".jsx":
-                case "package.json":
-                case ".py":
-                case "config.toml":
-                case "bunfig.toml":
-                case "deno.json":
-                case ".ts":
-                case ".tsx":
-                case ".yml":
-                case ".json":
-                case ".lock":
-                case ".png":
-                    break;
-                default:
-                    fail = true;
-                    break;
-            }
-
-            var tc = InputsPanel.Children[i] as ClearTextBox;
-            if (!File.Exists(tc.MyTextBox.Text))
-            {
-                fail = true;
-            }
-
-            if (!fail)
-            {
-                config.Files.Add(tb.MyTextBox.Text);
-                config.Icons.Add(tc.MyTextBox.Text);
-            }
-
-            i++;
-        }
-
-        string json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
-        File.WriteAllText(ConfigPath, json);
-        SearchApply(config);
     }
 
     async void SearchApply(ConfigData config)
@@ -195,25 +148,65 @@ public partial class MainWindow : Window
         }
     }
 
-    private void AddButton_OnClick(object sender, RoutedEventArgs e)
-    {
-        ClearTextBox tb = new ClearTextBox();
-        InputsPanel.Children.Add(tb);
-        ClearTextBox tc = new ClearTextBox();
-        FilesPanel.Children.Add(tc);
-    }
-
-    private void AddFile_OnClick(object sender, RoutedEventArgs e)
-    {
-        ClearTextBox tc = new ClearTextBox();
-        InputsPanel.Children.Add(tc);
-        ClearTextBox tb = new ClearTextBox();
-        FilesPanel.Children.Add(tb);
-    }
-
+     
     private class ConfigData
     {
         public List<string> Files { get; set; } = new();
         public List<string> Icons { get; set; } = new();
+    }
+
+    private void AddButton_OnClick(object sender, RoutedEventArgs e)
+    {
+        ClearTextBox tb = new ClearTextBox();
+        tb.RequestRemove += (s, args) =>
+        {
+            InputsPanel.Children.Remove((tb));
+        };
+        InputsPanel.Children.Add(tb);
+    }
+
+    private void SaveButtonMethod(object sender, RoutedEventArgs e)
+    {
+        var config = new ConfigData();
+        foreach (ClearTextBox tb in InputsPanel.Children)
+        {
+            bool fail = false;
+            switch (tb.MyTextBox.Text)
+            {
+                case ".cpp":
+                case ".js":
+                case ".jsx":
+                case "package.json":
+                case ".py":
+                case "config.toml":
+                case "bunfig.toml":
+                case "deno.json":
+                case ".ts":
+                case ".tsx":
+                case ".yml":
+                case ".json":
+                case ".lock":
+                case ".png":
+                    break;
+                default:
+                    fail = true;
+                    break;
+            }
+
+            if (!File.Exists(tb.IconInput.Text))
+            {
+                fail = true;
+            }
+
+            if (!fail)
+            {
+                config.Files.Add(tb.MyTextBox.Text);
+                config.Icons.Add(tb.IconInput.Text);
+            }
+        }
+
+        string json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
+        File.WriteAllText(ConfigPath, json);
+        SearchApply(config);
     }
 }

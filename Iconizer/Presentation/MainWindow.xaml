@@ -6,61 +6,117 @@
         mc:Ignorable="d"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen"
-        Title="Iconizer" Height="450" Width="800">
-    <Grid >
-        <Grid.RowDefinitions>
-            <RowDefinition Height="30" />
-            <RowDefinition />
-            <RowDefinition Height="50" />
-        </Grid.RowDefinitions>
-        <TextBlock Grid.Row="0" Name="TbHello" Text="Settings" FontSize="15" HorizontalAlignment="Center" />
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition />
-                <ColumnDefinition />
-            </Grid.ColumnDefinitions>
-            <Grid Grid.Column="0">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="30" />
-                    <RowDefinition Height="80" />
-                    <RowDefinition />
-                </Grid.RowDefinitions>
-                <TextBlock Text="Files and Extensions" VerticalAlignment="Center" HorizontalAlignment="Center" />
-                <TextBlock Grid.Row="1" Opacity="0.8" TextWrapping="WrapWithOverflow" TextAlignment="Left" Margin="10"
-                           FontWeight="Light" FontSize="13">
-                    Names of files and extensions which parent folder icon will be changed with its corresponding Icon defined in the other column.
-                    Example: *.cpp, *.tsx, package.json, config.toml
-                </TextBlock>
-                <ScrollViewer Grid.Row="2">
-                    <StackPanel>
-                        <StackPanel Name="FilesPanel" Margin="10"></StackPanel>
-                        <Button Name="AddFile" Click="AddFile_OnClick" HorizontalAlignment="Center" Content="Add more" />
-                    </StackPanel>
-                </ScrollViewer>
-            </Grid>
-            <Grid Grid.Column="1">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="30" />
-                    <RowDefinition Height="80" />
-                    <RowDefinition />
-                </Grid.RowDefinitions>
-                <TextBlock Text="Icons Paths" VerticalAlignment="Center" HorizontalAlignment="Center" />
-                <TextBlock Grid.Row="1" Opacity="0.8" TextWrapping="WrapWithOverflow" TextAlignment="Left" Margin="10"
-                           FontSize="13" FontWeight="Light">
-                    Icon Files Path that will be apply to the corresponding extensions. Format: .ico
-                </TextBlock>
-                <ScrollViewer Grid.Row="2">
+        Title="Iconizer" Height="500" Width="800" Icon="pack://Application:,,,/Assets/extension_icon.ico">
 
-                    <StackPanel>
-                        <StackPanel Name="InputsPanel" Margin="10"></StackPanel>
-                        <Button Name="AddButton" HorizontalAlignment="Center" Click="AddButton_OnClick"
-                                Content="Add more" />
-                    </StackPanel>
-                </ScrollViewer>
+    <Border Background="#1c1922" Padding="25,10,25,5">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="40" />
+                <RowDefinition />
+                <RowDefinition Height="50" />
+            </Grid.RowDefinitions>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <TextBlock
+                    Grid.Row="0"
+                    VerticalAlignment="Center"
+
+                    Foreground="White" Name="TbHello" Text="Settings"
+                    FontSize="28" FontWeight="SemiBold" HorizontalAlignment="Left" />
+                <Button Grid.Column="1" Name="LoadIcons" Width="70" Height="30" VerticalAlignment="Center"
+                        HorizontalAlignment="Right"
+                        Content="Save" FontSize="15" />
+                <!--Click="BtButton_OnClick"-->
+            </Grid>
+            <Border Grid.Row="1" Background="#3a3742" Padding="05" Margin="0,20,0,0"
+                    CornerRadius="20">
+
+                <Grid Grid.Row="1">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="30*" />
+                        <RowDefinition Height="70*" />
+                    </Grid.RowDefinitions>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <Grid Margin="10,5,10,5">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="40*" />
+                                <RowDefinition Height="60*" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="Extensions" VerticalAlignment="Center"
+                                       HorizontalAlignment="Left"
+                                       FontSize="20"
+                                       FontWeight="SemiBold"
+                                       Foreground="White" />
+                            <TextBlock Grid.Row="1" Opacity="0.8" TextWrapping="WrapWithOverflow" TextAlignment="Left"
+
+                                       HorizontalAlignment="Left"
+                                       Foreground="White"
+                                       FontWeight="Light" FontSize="13">
+                                Extensions or files to match which parent folder icon will be changed with its corresponding icon.
+                                Example: .cpp, .tsx, package.json, config.toml
+                            </TextBlock>
+                        </Grid>
+                        <Grid Grid.Column="1" Margin="70,5,10,5">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="40*" />
+                                <RowDefinition Height="60*" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="Icons Paths"
+                                       Foreground="White"
+                                       FontWeight="SemiBold"
+                                       FontSize="20"
+                                       VerticalAlignment="Center"
+                                       HorizontalAlignment="Left" />
+                            <TextBlock Grid.Row="1" Opacity="0.8" TextWrapping="WrapWithOverflow" TextAlignment="Left"
+                                       Foreground="White"
+                                       HorizontalAlignment="Left"
+                                       FontSize="13" FontWeight="Light">
+                                Icon Files Path that will be apply to the folder.
+                                Format: .ico
+                            </TextBlock>
+                        </Grid>
+                    </Grid>
+
+
+                    <Grid Grid.Row="1">
+                        <ScrollViewer>
+                            <StackPanel>
+                                <StackPanel Name="InputsPanel" Margin="10,0"></StackPanel>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+                </Grid>
+            </Border>
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <Button Name="LoadConfigButton" VerticalAlignment="Center"
+                        HorizontalAlignment="Left"
+                        Content="Load"
+                        Background="#3c434b"    
+                        FontSize="15" />
+                <!--Click="BtButton_OnClick"-->
+                <Button Grid.Column="1" Name="SaveButton" HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Background="#3b7dd1"
+                        Click="SaveButtonMethod"
+                        Content="Save" />
+                <Button Grid.Column="2" Name="AddButton" HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Background="#3c434b"
+                        Click="AddButton_OnClick"
+                        Content="Add" />
             </Grid>
         </Grid>
-        <Button Grid.Row="2" Name="BtButton" Width="70" Height="30" VerticalAlignment="Center"
-                HorizontalAlignment="Center"
-                Content="Save" FontSize="15" Click="BtButton_OnClick" />
-    </Grid>
+    </Border>
 </Window>

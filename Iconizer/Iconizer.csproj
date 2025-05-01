@@ -19,4 +19,9 @@
       </Page>
     </ItemGroup>
 
+    <ItemGroup>
+      <None Remove="Assets\extension_icon.ico" />
+      <Resource Include="Assets\extension_icon.ico" />
+    </ItemGroup>
+
 </Project>
