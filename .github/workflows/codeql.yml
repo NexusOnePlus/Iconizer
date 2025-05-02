@@ -12,16 +12,7 @@
 name: "CodeQL Advanced"
 
 on:
-  push:
-    branches: [ "main" ]
-    paths: 
-      -'Iconizer/**'
-      -'Iconizer.sln'
-  pull_request:
-    branches: [ "main" ]
-    paths: 
-      -'Iconizer/**'
-      -'Iconizer.sln'
+  workflow_dispatch:
   schedule:
     - cron: '42 12 * * 1'
 
