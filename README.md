@@ -82,6 +82,7 @@ Iconizer includes icons for popular programming languages and applications such 
 - JavaScript/TypeScript
 - C#/.NET
 - Java
+- Bun
 - Go
 - And many more...
 
