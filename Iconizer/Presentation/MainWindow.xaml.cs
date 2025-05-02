@@ -109,14 +109,14 @@ public partial class MainWindow : Window
                         {
                             if (file.Contains(ext))
                             {
-                                File.Copy(config.Icons[i], $"{folder}\\iconizer-{Path.GetFileName(config.Icons[i])}");
+                                File.Copy(config.Icons[i], $"{folder}\\iconizer.ico");
                                 found = true;
                                 string desktopinitPath = Path.Combine(folder, "desktop.ini");
                                 string initContect =
                                     "[.ShellClassInfo]\n" +
-                                    $"IconResource=iconizer-{Path.GetFileName(config.Icons[i])},0\n";
+                                    $"IconResource=iconizer.ico,0\n";
                                 File.WriteAllText(desktopinitPath, initContect, Encoding.Unicode);
-                                File.SetAttributes($"{folder}\\iconizer-{Path.GetFileName(config.Icons[i])}",
+                                File.SetAttributes($"{folder}\\iconizer.ico",
                                     FileAttributes.Hidden | FileAttributes.System);
 
                                 File.SetAttributes(desktopinitPath, FileAttributes.Hidden | FileAttributes.System);
@@ -174,6 +174,7 @@ public partial class MainWindow : Window
             switch (tb.MyTextBox.Text)
             {
                 case ".cpp":
+                case ".rs":
                 case ".js":
                 case ".jsx":
                 case "package.json":
