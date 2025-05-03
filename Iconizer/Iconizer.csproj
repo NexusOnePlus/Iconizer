@@ -6,22 +6,33 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <UseWPF>true</UseWPF>
+        <ApplicationIcon>Assets\extension_icon.ico</ApplicationIcon>
     </PropertyGroup>
 
     <ItemGroup>
-      <Page Update="Presentation\View\UserControls\ClearTextBox.xaml">
-        <Generator>MSBuild:Compile</Generator>
-      </Page>
-      <Page Update="Presentation\MainWindow.xaml">
-        <Generator>MSBuild:Compile</Generator>
-        <XamlRuntime>Wpf</XamlRuntime>
-        <SubType>Designer</SubType>
-      </Page>
+        <Page Update="Presentation\View\UserControls\ClearTextBox.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </Page>
+        <Page Update="Presentation\MainWindow.xaml">
+            <Generator>MSBuild:Compile</Generator>
+            <XamlRuntime>Wpf</XamlRuntime>
+            <SubType>Designer</SubType>
+        </Page>
     </ItemGroup>
 
     <ItemGroup>
-      <None Remove="Assets\extension_icon.ico" />
-      <Resource Include="Assets\extension_icon.ico" />
+        <Resource Include="Assets\extension_icon.ico"/>
+        <EmbeddedResource Include="Assets\extension_icon.ico">
+            <LogicalName>Iconizer.Assets.extension_icon.ico</LogicalName>
+        </EmbeddedResource>
+        <None Update="Assets\extension_icon.ico">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Hardcodet.NotifyIcon.Wpf" Version="2.0.1"/>
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0-preview.3.25171.5"/>
     </ItemGroup>
 
 </Project>
