@@ -99,19 +99,26 @@
                     <ColumnDefinition />
                     <ColumnDefinition />
                     <ColumnDefinition />
+                    <ColumnDefinition />
                 </Grid.ColumnDefinitions>
                 <Button Name="LoadConfigButton" VerticalAlignment="Center"
                         HorizontalAlignment="Left"
                         Content="Load"
                         Background="#3c434b"    
                         FontSize="15" />
+                <Button Grid.Column="1"  Name="ResetConfigButton" VerticalAlignment="Center"
+                        HorizontalAlignment="Left"
+                        Content="Reset"
+                        Background="#3c434b"   
+                        Click="ResetConfigButton_OnClick"
+                        FontSize="15" />
                 <!--Click="BtButton_OnClick"-->
-                <Button Grid.Column="1" Name="SaveButton" HorizontalAlignment="Center"
+                <Button Grid.Column="2" Name="SaveButton" HorizontalAlignment="Center"
                         VerticalAlignment="Center"
                         Background="#3b7dd1"
                         Click="SaveButtonMethod"
                         Content="Save" />
-                <Button Grid.Column="2" Name="AddButton" HorizontalAlignment="Right"
+                <Button Grid.Column="3" Name="AddButton" HorizontalAlignment="Right"
                         VerticalAlignment="Center"
                         Background="#3c434b"
                         Click="AddButton_OnClick"

@@ -5,6 +5,7 @@ using Iconizer.Presentation.View.UserControls;
 using System.Text.Json;
 using Path = System.IO.Path;
 using System.Runtime.InteropServices;
+using Iconizer.Utils;
 
 namespace Iconizer.Presentation;
 
@@ -27,7 +28,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-
+        FileSystemWatcher watcher = new FileSystemWatcher();
         TbHello.Text = "Settings";
         if (!Directory.Exists(FolderPath))
         {
@@ -53,10 +54,7 @@ public partial class MainWindow : Window
                     var tb = new ClearTextBox();
                     tb.MyTextBox.Text = file;
                     tb.IconInput.Text = config.Icons[i];
-                    tb.RequestRemove += (s, args) =>
-                    {
-                        InputsPanel.Children.Remove((tb));
-                    };
+                    tb.RequestRemove += (s, args) => { InputsPanel.Children.Remove((tb)); };
                     InputsPanel.Children.Add(tb);
                     i++;
                 }
@@ -66,12 +64,9 @@ public partial class MainWindow : Window
         {
             for (var i = 0; i < 5; i++)
             {
-              //  FilesPanel.Children.Add(new ClearTextBox());
-              var tb = new ClearTextBox();
-              tb.RequestRemove += (s, args) =>
-              {
-                  InputsPanel.Children.Remove((tb));
-              };
+                //  FilesPanel.Children.Add(new ClearTextBox());
+                var tb = new ClearTextBox();
+                tb.RequestRemove += (s, args) => { InputsPanel.Children.Remove((tb)); };
                 InputsPanel.Children.Add(tb);
             }
         }
@@ -148,7 +143,7 @@ public partial class MainWindow : Window
         }
     }
 
-     
+
     private class ConfigData
     {
         public List<string> Files { get; set; } = new();
@@ -158,10 +153,7 @@ public partial class MainWindow : Window
     private void AddButton_OnClick(object sender, RoutedEventArgs e)
     {
         ClearTextBox tb = new ClearTextBox();
-        tb.RequestRemove += (s, args) =>
-        {
-            InputsPanel.Children.Remove((tb));
-        };
+        tb.RequestRemove += (s, args) => { InputsPanel.Children.Remove((tb)); };
         InputsPanel.Children.Add(tb);
     }
 
@@ -180,6 +172,7 @@ public partial class MainWindow : Window
                 case "package.json":
                 case ".py":
                 case "config.toml":
+                case "Cargo.toml":
                 case "bunfig.toml":
                 case "deno.json":
                 case ".ts":
@@ -209,5 +202,12 @@ public partial class MainWindow : Window
         string json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
         File.WriteAllText(ConfigPath, json);
         SearchApply(config);
+    }
+
+    private void ResetConfigButton_OnClick(object sender, RoutedEventArgs e)
+    {
+        string rootPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+        string[] folders = Directory.GetDirectories(rootPath, "*", SearchOption.TopDirectoryOnly);
+        Cleaner.Clean(folders);
     }
 }
