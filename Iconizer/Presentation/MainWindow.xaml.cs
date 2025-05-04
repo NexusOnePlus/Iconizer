@@ -119,7 +119,7 @@ public partial class MainWindow : Window
                                 Directory.SetLastWriteTime(folder, DateTime.Now);
 
                                 //Reloading
-                                SHChangeNotify(0x08000000, 0x0000, folder, (IntPtr)null);
+                                SHChangeNotify(0x00002000, 0x0005, folder, (IntPtr)null);
                                 await Task.Delay(2000);
 
                                 File.SetAttributes(folder, File.GetAttributes(folder) | FileAttributes.ReadOnly);
