@@ -2,6 +2,6 @@
 
 public interface IIconService
 {
-    List<IconItem> GetIcons(string folderPath);
+    List<IconItem>? GetIcons(string folderPath);
     void ClearIcons(string folderPath);
 }

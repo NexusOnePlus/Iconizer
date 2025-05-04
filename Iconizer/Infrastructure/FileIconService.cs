@@ -4,7 +4,7 @@ namespace Iconizer.Infrastructure;
 
 public class FileIconService : IIconService
 {
-    public List<IconItem> GetIcons(string folderPath)
+    public List<IconItem>? GetIcons(string folderPath)
     {
         // Read icons from folder
         return null;
