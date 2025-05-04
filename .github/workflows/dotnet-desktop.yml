@@ -1,50 +1,43 @@
-name: .NET Core Desktop Debug version
-
+name: .NET Core Desktop Debug Version
 on:
   workflow_dispatch:
-
 jobs:
-
   build:
-
     strategy:
       matrix:
         configuration: [Debug]
-
-    runs-on: windows-latest  # For a list of available runner types, refer to
-                             # https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
-
+    runs-on: windows-latest
+    
     env:
-      Solution_Name: Iconizer.sln                     # Replace with your solution name, i.e. MyWpfApp.sln.
+      Solution_Name: Iconizer.sln
       Project_Path: Iconizer/Iconizer.csproj
-
+    
     steps:
     - name: Checkout
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-
+        
     # Install the .NET Core workload
     - name: Install .NET Core
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 9.0.x
-
     
     - name: Restore dependencies
       run: dotnet restore ${{ env.Solution_Name }}
-
+      
     - name: Build
       run: dotnet build ${{ env.Solution_Name }} --configuration ${{ matrix.configuration }} --no-restore
-
+      
     - name: Test
       run: dotnet test ${{ env.Solution_Name }} --configuration ${{ matrix.configuration }} --no-build
-
-    - name: Publish
-      run: dotnet publish ${{ env.Project_Path }} --configuration Debug --no-build --runtime win-x64 --self-contained true --output ./debug-build
-
+      
+    - name: Publish Self-Contained
+      run: dotnet publish ${{ env.Project_Path }} --configuration ${{ matrix.configuration }} --runtime win-x64 --self-contained true --output ./debug-build
+      
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: Debug-Application-${{ matrix.configuration }}
-        path: ./publish
+        name: Debug-Self-Contained-Application
+        path: ./debug-build
