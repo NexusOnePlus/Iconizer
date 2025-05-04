@@ -1,4 +1,4 @@
-name: .NET Core Desktop
+name: .NET Core Desktop Debug version
 
 on:
   workflow_dispatch:
@@ -9,7 +9,7 @@ jobs:
 
     strategy:
       matrix:
-        configuration: [Develop]
+        configuration: [Debug]
 
     runs-on: windows-latest  # For a list of available runner types, refer to
                              # https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
@@ -41,10 +41,10 @@ jobs:
       run: dotnet test ${{ env.Solution_Name }} --configuration ${{ matrix.configuration }} --no-build
 
     - name: Publish
-      run: dotnet publish ${{ env.Project_Path }} --configuration ${{ matrix.configuration }} --no-build --output ./publish
+      run: dotnet publish ${{ env.Project_Path }} --configuration Debug --no-build --runtime win-x64 --self-contained true --output ./debug-build
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: Application-${{ matrix.configuration }}
+        name: Debug-Application-${{ matrix.configuration }}
         path: ./publish
