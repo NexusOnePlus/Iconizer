@@ -6,6 +6,7 @@ using System.Text.Json;
 using Path = System.IO.Path;
 using System.Runtime.InteropServices;
 using Iconizer.Utils;
+using Infra = Iconizer.Infrastructure;
 
 namespace Iconizer.Presentation;
 
@@ -74,6 +75,8 @@ public partial class MainWindow : Window
 
     async void SearchApply(ConfigData config)
     {
+        await Infra.Background.DesktopWatcherC.ReloadWatchers();
+        /*
         string rootPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
         string[] folders = Directory.GetDirectories(rootPath, "*", SearchOption.TopDirectoryOnly);
         foreach (string folder in folders)
@@ -141,6 +144,7 @@ public partial class MainWindow : Window
                 }
             }
         }
+        */
     }
 
 
@@ -201,7 +205,10 @@ public partial class MainWindow : Window
 
         string json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
         File.WriteAllText(ConfigPath, json);
+        
+
         SearchApply(config);
+
     }
 
     private void ResetConfigButton_OnClick(object sender, RoutedEventArgs e)
@@ -210,4 +217,5 @@ public partial class MainWindow : Window
         string[] folders = Directory.GetDirectories(rootPath, "*", SearchOption.TopDirectoryOnly);
         Cleaner.Clean(folders);
     }
+    
 }

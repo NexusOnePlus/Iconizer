@@ -7,85 +7,95 @@ using System.Reflection;
 using System.Windows.Controls;
 using System.Windows.Threading;
 using Iconizer.Presentation;
+using Iconizer.Utils;
 
 namespace Iconizer.Infrastructure;
 
 public class Background
 {
-    public static class BackgroundApp
-    {
-        private static TaskbarIcon? TrayIcon;
+    public static DesktopWatcher DesktopWatcherC { get; private set; } = null!;
+    public static ConfigLoader ConfigLoaderC { get; private set; } = null!;
+    private static TaskbarIcon? _trayIcon;
 
-        public static void Initialize()
+    public static async Task Initialize()
+    {
+        var assembly = Assembly.GetExecutingAssembly();
+        using Stream? stream = assembly.GetManifestResourceStream("Iconizer.Assets.extension_icon.ico");
+        if (stream == null)
         {
-            var assembly = Assembly.GetExecutingAssembly();
-            using Stream? stream = assembly.GetManifestResourceStream("Iconizer.Assets.extension_icon.ico");
-            if (stream == null)
+            string iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "extension_icon.ico");
+            if (File.Exists(iconPath))
             {
-                string iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "extension_icon.ico");
-                if (File.Exists(iconPath))
+                _trayIcon = new TaskbarIcon
                 {
-                    TrayIcon = new TaskbarIcon
-                    {
-                        Icon = new Icon(iconPath),
-                        ToolTipText = "Iconizer Running"
-                    };
-                }
-                else
-                {
-                    MessageBox.Show(
-                        "Icon Not Found");
-                    TrayIcon = new TaskbarIcon
-                    {
-                        ToolTipText = "Iconizer"
-                    };
-                }
+                    Icon = new Icon(iconPath),
+                    ToolTipText = "Iconizer Running"
+                };
             }
             else
             {
-                TrayIcon = new TaskbarIcon
+                MessageBox.Show(
+                    "Icon Not Found");
+                _trayIcon = new TaskbarIcon
                 {
-                    Icon = new System.Drawing.Icon(stream),
                     ToolTipText = "Iconizer"
                 };
             }
-
-            TrayIcon.ContextMenu = CreateContextMenu();
-            TrayIcon.TrayContextMenuOpen += (s, e) =>
+        }
+        else
+        {
+            _trayIcon = new TaskbarIcon
             {
-                if (TrayIcon.ContextMenu != null)
-                {
-                    TrayIcon.ContextMenu.Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(() => {
-                        if (TrayIcon.ContextMenu.IsOpen)
-                        {
-                            TrayIcon.ContextMenu.Focus();
-                        }
-                    }));
-                }
+                Icon = new System.Drawing.Icon(stream),
+                ToolTipText = "Iconizer"
             };
-
-            TrayIcon.TrayLeftMouseDown += (_, _) => App.ShowWindow();
         }
 
-        private static ContextMenu CreateContextMenu()
+        _trayIcon.ContextMenu = CreateContextMenu();
+        _trayIcon.TrayContextMenuOpen += (s, e) =>
         {
-            var menu = new ContextMenu();
-            var openItem = new MenuItem { Header = "Open" };
-            openItem.Click += (_, _) => App.ShowWindow();
-            menu.Items.Add(openItem);
+            if (_trayIcon.ContextMenu != null)
+            {
+                _trayIcon.ContextMenu.Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(() =>
+                {
+                    if (_trayIcon.ContextMenu.IsOpen)
+                    {
+                        _trayIcon.ContextMenu.Focus();
+                    }
+                }));
+            }
+        };
 
-            menu.Items.Add(new Separator());
-            
-            var exitItem = new MenuItem { Header = "Exit" };
-            exitItem.Click += (_, _) => System.Windows.Application.Current.Shutdown();
-            menu.Items.Add(exitItem);
+        _trayIcon.TrayLeftMouseDown += (_, _) => App.ShowWindow();
+        ConfigLoaderC = new ConfigLoader();
+        ConfigLoaderC.Load();
 
-            return menu;
-        }
+        DesktopWatcherC = new DesktopWatcher(
+            ConfigLoaderC,
+            new FileIconService()
+        );
+        await DesktopWatcherC.Start();
+    }
 
-        public static void Dispose()
-        {
-            TrayIcon?.Dispose();
-        }
+    private static ContextMenu CreateContextMenu()
+    {
+        var menu = new ContextMenu();
+        var openItem = new MenuItem { Header = "Open" };
+        openItem.Click += (_, _) => App.ShowWindow();
+        menu.Items.Add(openItem);
+
+        menu.Items.Add(new Separator());
+
+        var exitItem = new MenuItem { Header = "Exit" };
+        exitItem.Click += (_, _) => System.Windows.Application.Current.Shutdown();
+        menu.Items.Add(exitItem);
+
+        return menu;
+    }
+
+    public static void Dispose()
+    {
+        _trayIcon?.Dispose();
+        DesktopWatcherC?.Dispose();
     }
 }

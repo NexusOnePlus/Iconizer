@@ -14,10 +14,10 @@ public partial class App : System.Windows.Application
 {
     public static MainWindow? MainInstance { get; private set; }
 
-    protected override void OnStartup(StartupEventArgs e)
+    protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
-        Background.BackgroundApp.Initialize();
+        await Background.Initialize();
 
         MainWindow window = new Presentation.MainWindow();
         MainInstance = window;
@@ -28,7 +28,7 @@ public partial class App : System.Windows.Application
 
     protected override void OnExit(ExitEventArgs e)
     {
-        Background.BackgroundApp.Dispose();
+        Background.Dispose();
         base.OnExit(e);
     }
 
@@ -40,7 +40,7 @@ public partial class App : System.Windows.Application
             {
                 MainInstance = new MainWindow();
                 System.Windows.Application.Current.MainWindow = MainInstance;
-                MainInstance.Closing += ((App)Current).MainIsClosing;
+                MainInstance.Closing += MainIsClosing;
                 MainInstance.Closed += (_, _) => { MainInstance = null; };
             }
 
@@ -50,10 +50,10 @@ public partial class App : System.Windows.Application
         });
     }
 
-    
-    private void MainIsClosing(object? sender, System.ComponentModel.CancelEventArgs e)
+
+    private static void MainIsClosing(object? sender, System.ComponentModel.CancelEventArgs e)
     {
-            e.Cancel = true;
-            MainInstance!.Hide();
+        e.Cancel = true;
+        MainInstance!.Hide();
     }
 }
