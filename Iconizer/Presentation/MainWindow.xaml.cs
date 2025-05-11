@@ -1,221 +1,103 @@
-﻿using System.Text;
-using System.Windows;
+﻿/*
+ * Refactorización de MainWindow.xaml.cs:
+ *
+ * Extracciones:
+ *  - ConfigData                → Domain/ConfigData.cs
+ *  - IConfigService, ConfigService      → Application/Services/ConfigService.cs
+ *  - IIconAssignmentService, IconAssignmentService → Application/Services/IconAssignmentService.cs
+ *  - File-system y atributos   → Infrastructure/Services/FileIconService.cs
+ *  - Cleaner                   → Infrastructure/Services/Cleaner.cs
+ *  - Validaciones de extensiones → Application/Validators/ExtensionValidator.cs
+ */
+
 using System.IO;
+using System.Windows;
 using Iconizer.Presentation.View.UserControls;
-using System.Text.Json;
-using Path = System.IO.Path;
-using System.Runtime.InteropServices;
-using Iconizer.Utils;
-using Infra = Iconizer.Infrastructure;
+using Iconizer.Domain;
+using Iconizer.Application.Services;
+using Iconizer.Application.Validators;
+using Iconizer.Infrastructure;
 
-namespace Iconizer.Presentation;
-
-/// <summary>
-/// Interaction logic for MainWindow.xaml
-/// </summary>
-public partial class MainWindow : Window
+namespace Iconizer.Presentation
 {
-    [DllImport("shell32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-    private static extern void SHChangeNotify(
-        int wEventId, int uFlags, string dwItem1, IntPtr dwItem2);
-
-    private readonly string ConfigPath =
-        Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\Iconizer\config.json";
-
-    private readonly string FolderPath =
-        Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\Iconizer";
-
-
-    public MainWindow()
+    public partial class MainWindow : Window
     {
-        InitializeComponent();
-        FileSystemWatcher watcher = new FileSystemWatcher();
-        TbHello.Text = "Settings";
-        if (!Directory.Exists(FolderPath))
+        private readonly IConfigService _configService;
+        private readonly IIconAssignmentService _iconService;
+        private readonly IExtensionValidator _validator;
+
+        public MainWindow(
+            IConfigService configService,
+            IIconAssignmentService iconService,
+            IExtensionValidator validator)
         {
-            Directory.CreateDirectory(FolderPath);
+            InitializeComponent();
+
+            _configService = configService;
+            _iconService = iconService;
+            _validator = validator;
+
+            LoadConfig();
         }
 
-        LoadConfig();
-    }
-
-    private void LoadConfig()
-    {
-        if (File.Exists(ConfigPath))
+        private void LoadConfig()
         {
-            string json = File.ReadAllText(ConfigPath);
-            var config = JsonSerializer.Deserialize<ConfigData>(json);
+            var config = _configService.Load(ConfigPaths.ConfigFilePath);
+            InputsPanel.Children.Clear();
 
-            if (config != null)
+            if (config?.Files.Any() == true)
             {
-                InputsPanel.Children.Clear();
-                var i = 0;
-                foreach (var file in config.Files)
+                for (int i = 0; i < config.Files.Count; i++)
                 {
-                    var tb = new ClearTextBox();
-                    tb.MyTextBox.Text = file;
-                    tb.IconInput.Text = config.Icons[i];
-                    tb.RequestRemove += (s, args) => { InputsPanel.Children.Remove((tb)); };
+                    var tb = CreateControl(config.Files[i], config.Icons[i]);
                     InputsPanel.Children.Add(tb);
-                    i++;
                 }
             }
+            else
+            {
+                // Empezar con 5 controles vacíos
+                for (int i = 0; i < 5; i++)
+                    InputsPanel.Children.Add(CreateControl());
+            }
         }
-        else
+
+        private ClearTextBox CreateControl(string fileExt = "", string iconPath = "")
         {
-            for (var i = 0; i < 5; i++)
-            {
-                //  FilesPanel.Children.Add(new ClearTextBox());
-                var tb = new ClearTextBox();
-                tb.RequestRemove += (s, args) => { InputsPanel.Children.Remove((tb)); };
-                InputsPanel.Children.Add(tb);
-            }
+            var tb = new ClearTextBox();
+            tb.MyTextBox.Text = fileExt;
+            tb.IconInput.Text = iconPath;
+            tb.RequestRemove += (s, e) => InputsPanel.Children.Remove(tb);
+            return tb;
         }
-    }
 
-    async void SearchApply(ConfigData config)
-    {
-        await Infra.Background.DesktopWatcherC.ReloadWatchers();
-        /*
-        string rootPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-        string[] folders = Directory.GetDirectories(rootPath, "*", SearchOption.TopDirectoryOnly);
-        foreach (string folder in folders)
+        private void AddButton_OnClick(object sender, RoutedEventArgs e)
         {
-            string[] dataFiles = Directory.GetFiles(folder, "*.*", SearchOption.TopDirectoryOnly);
-            if (dataFiles.Length > 0)
-            {
-                bool already = false;
-                List<string> names = new List<string>();
-                foreach (string file in dataFiles)
-                {
-                    if (Path.GetFileName(file) == "desktop.ini")
-                    {
-                        already = true;
-                        break;
-                    }
-
-                    names.Add(Path.GetFileName(file));
-                }
-
-                if (!already)
-                {
-                    bool found = false;
-                    foreach (string file in names)
-                    {
-                        int i = 0;
-                        foreach (string ext in config.Files)
-                        {
-                            if (file.Contains(ext))
-                            {
-                                File.Copy(config.Icons[i], $"{folder}\\iconizer.ico");
-                                found = true;
-                                string desktopinitPath = Path.Combine(folder, "desktop.ini");
-                                string initContect =
-                                    "[.ShellClassInfo]\n" +
-                                    $"IconResource=iconizer.ico,0\n";
-                                File.WriteAllText(desktopinitPath, initContect, Encoding.Unicode);
-                                File.SetAttributes($"{folder}\\iconizer.ico",
-                                    FileAttributes.Hidden | FileAttributes.System);
-
-                                File.SetAttributes(desktopinitPath, FileAttributes.Hidden | FileAttributes.System);
-                                File.SetAttributes(folder, File.GetAttributes(folder) | FileAttributes.System);
-                                Directory.SetLastWriteTime(folder, DateTime.Now);
-
-                                //Reloading
-                                SHChangeNotify(0x00002000, 0x0005, folder, (IntPtr)null);
-                                await Task.Delay(2000);
-
-                                File.SetAttributes(folder, File.GetAttributes(folder) | FileAttributes.ReadOnly);
-
-                                File.SetAttributes(folder, File.GetAttributes(folder) & ~FileAttributes.System);
-
-
-                                break;
-                            }
-
-                            i++;
-                        }
-
-                        if (found)
-                        {
-                            break;
-                        }
-                    }
-                }
-            }
+            InputsPanel.Children.Add(CreateControl());
         }
-        */
-    }
 
-
-    private class ConfigData
-    {
-        public List<string> Files { get; set; } = new();
-        public List<string> Icons { get; set; } = new();
-    }
-
-    private void AddButton_OnClick(object sender, RoutedEventArgs e)
-    {
-        ClearTextBox tb = new ClearTextBox();
-        tb.RequestRemove += (s, args) => { InputsPanel.Children.Remove((tb)); };
-        InputsPanel.Children.Add(tb);
-    }
-
-    private void SaveButtonMethod(object sender, RoutedEventArgs e)
-    {
-        var config = new ConfigData();
-        foreach (ClearTextBox tb in InputsPanel.Children)
+        private void SaveButton_OnClick(object sender, RoutedEventArgs e)
         {
-            bool fail = false;
-            switch (tb.MyTextBox.Text)
+            var config = new ConfigData();
+
+            foreach (ClearTextBox tb in InputsPanel.Children)
             {
-                case ".cpp":
-                case ".rs":
-                case ".js":
-                case ".jsx":
-                case "package.json":
-                case ".py":
-                case "config.toml":
-                case "Cargo.toml":
-                case "bunfig.toml":
-                case "deno.json":
-                case ".ts":
-                case ".tsx":
-                case ".yml":
-                case ".json":
-                case ".lock":
-                case ".png":
-                    break;
-                default:
-                    fail = true;
-                    break;
+                var ext = tb.MyTextBox.Text;
+                var icon = tb.IconInput.Text;
+
+                if (!_validator.IsValidExtension(ext) || !File.Exists(icon))
+                    continue;
+
+                config.Files.Add(ext);
+                config.Icons.Add(icon);
             }
 
-            if (!File.Exists(tb.IconInput.Text))
-            {
-                fail = true;
-            }
-
-            if (!fail)
-            {
-                config.Files.Add(tb.MyTextBox.Text);
-                config.Icons.Add(tb.IconInput.Text);
-            }
+            _configService.Save(config, ConfigPaths.ConfigFilePath);
+            _iconService.ApplyIcons(config);
         }
 
-        string json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
-        File.WriteAllText(ConfigPath, json);
-        
-
-        SearchApply(config);
-
+        private void ResetConfigButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            _iconService.CleanDesktop();
+        }
     }
-
-    private void ResetConfigButton_OnClick(object sender, RoutedEventArgs e)
-    {
-        string rootPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-        string[] folders = Directory.GetDirectories(rootPath, "*", SearchOption.TopDirectoryOnly);
-        Cleaner.Clean(folders);
-    }
-    
 }

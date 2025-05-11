@@ -116,7 +116,7 @@
                 <Button Grid.Column="2" Name="SaveButton" HorizontalAlignment="Center"
                         VerticalAlignment="Center"
                         Background="#3b7dd1"
-                        Click="SaveButtonMethod"
+                        Click="SaveButton_OnClick"
                         Content="Save" />
                 <Button Grid.Column="3" Name="AddButton" HorizontalAlignment="Right"
                         VerticalAlignment="Center"
