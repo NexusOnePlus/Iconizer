@@ -31,22 +31,17 @@ namespace Iconizer.Infrastructure.Services
             {
                 // Obtiene todos los archivos del folder
                 var files = Directory.GetFiles(folder, "*.*", SearchOption.TopDirectoryOnly);
-                bool matched = false;
+                var matched = false;
                 string iconPath = null!;
 
                 // Busca el primer patrón que encaje
-                for (int i = 0; i < config.Files.Count; i++)
+                for (var i = 0; i < config.Files.Count; i++)
                 {
                     var pattern = config.Files[i];
-                    foreach (var f in files)
+                    if (files.Select(f => Path.GetFileName(f)).Any(name => name.Contains(pattern, StringComparison.OrdinalIgnoreCase)))
                     {
-                        var name = Path.GetFileName(f);
-                        if (name.Contains(pattern, StringComparison.OrdinalIgnoreCase))
-                        {
-                            matched = true;
-                            iconPath = config.Icons[i];
-                            break;
-                        }
+                        matched = true;
+                        iconPath = config.Icons[i];
                     }
                     if (matched) break;
                 }
@@ -92,7 +87,7 @@ namespace Iconizer.Infrastructure.Services
         /// <summary>
         /// Intenta borrar un archivo, quitando atributos y reintentando si está bloqueado.
         /// </summary>
-        private void SafeDelete(string path, int maxRetries, int delayMs)
+        private static void SafeDelete(string path, int maxRetries, int delayMs)
         {
             for (int attempt = 0; attempt < maxRetries; attempt++)
             {
@@ -123,7 +118,7 @@ namespace Iconizer.Infrastructure.Services
         /// <summary>
         /// Copia un archivo, opcionalmente sobrescribiendo sin lanzar excepción.
         /// </summary>
-        private void SafeCopy(string source, string dest, bool overwrite)
+        private static void SafeCopy(string source, string dest, bool overwrite)
         {
             try
             {
@@ -138,7 +133,7 @@ namespace Iconizer.Infrastructure.Services
         }
 
 
-        private void RemoveIconConfig(string folderPath)
+        private static  void RemoveIconConfig(string folderPath)
         {
             var ini = Path.Combine(folderPath, "desktop.ini");
             var ico = Path.Combine(folderPath, "iconizer.ico");
