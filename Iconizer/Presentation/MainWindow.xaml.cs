@@ -55,8 +55,8 @@ namespace Iconizer.Presentation
             }
             else
             {
-                // Empezar con 5 controles vacíos
-                for (int i = 0; i < 5; i++)
+                // Empezar con 3 controles vacíos
+                for (var i = 0; i < 3; i++)
                     InputsPanel.Children.Add(CreateControl());
             }
         }
