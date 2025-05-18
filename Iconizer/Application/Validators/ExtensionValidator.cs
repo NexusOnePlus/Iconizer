@@ -13,7 +13,7 @@ namespace Iconizer.Application.Validators
         {
             ".cpp", ".rs", ".js", ".jsx", "package.json", ".py",
             "config.toml", "Cargo.toml", "bunfig.toml", "deno.json",
-            ".ts", ".tsx", ".yml", ".json", ".lock", ".png"
+            ".ts", ".tsx", ".yml", ".json", ".lock", ".png" , ".java"
         };
 
         public bool IsValidExtension(string ext) => Allowed.Contains(ext);
