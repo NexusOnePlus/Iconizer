@@ -45,9 +45,9 @@ namespace Iconizer.Presentation
             var config = _configService.Load(ConfigPaths.ConfigFilePath);
             InputsPanel.Children.Clear();
 
-            if (config?.Files.Any() == true)
+            if (config?.Files.Count > 0)
             {
-                for (int i = 0; i < config.Files.Count; i++)
+                for (var i = 0; i < config.Files.Count; i++)
                 {
                     var tb = CreateControl(config.Files[i], config.Icons[i]);
                     InputsPanel.Children.Add(tb);
