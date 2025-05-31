@@ -6,6 +6,7 @@ using Iconizer.Infrastructure.Services;
 using Iconizer.Presentation;
 using Infrastructure.Services;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Iconizer
 {
@@ -28,6 +29,11 @@ namespace Iconizer
             services.AddSingleton<IFileIconService, FileIconService>();
             services.AddSingleton<ICleaner, Cleaner>();
             services.AddSingleton<MainWindow>();
+            services.AddLogging(builder =>
+            {
+                builder.AddConsole();
+                builder.SetMinimumLevel(LogLevel.Trace);
+            });
             
             _provider = services.BuildServiceProvider();
             

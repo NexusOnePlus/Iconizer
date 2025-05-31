@@ -2,6 +2,7 @@
 using System.Runtime.InteropServices;
 using System.Text;
 using Iconizer.Domain;
+using Microsoft.Extensions.Logging;
 
 namespace Iconizer.Infrastructure.Services
 {
@@ -13,6 +14,11 @@ namespace Iconizer.Infrastructure.Services
 
     public class FileIconService : IFileIconService
     {
+        private readonly ILogger<FileIconService> _logger;
+        public FileIconService(ILogger<FileIconService> logger)
+        {
+            _logger = logger;
+        }
         [DllImport("shell32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         private static extern void SHChangeNotify(
             int wEventId, int uFlags, string dwItem1, IntPtr dwItem2);
@@ -20,6 +26,7 @@ namespace Iconizer.Infrastructure.Services
         public IEnumerable<string> GetDesktopFolders()
         {
             var desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            _logger.LogDebug("Getting desktop folders: {DesktopPath}", desktop);
             return Directory.Exists(desktop)
                 ? Directory.GetDirectories(desktop)
                 : Array.Empty<string>();
@@ -27,6 +34,7 @@ namespace Iconizer.Infrastructure.Services
 
         public void AssignIconsToFolders(ConfigData config)
         {
+            _logger.LogInformation("Assigning icons to desktop folders...");
             foreach (var folder in GetDesktopFolders())
             {
                 // Obtiene todos los archivos del folder
@@ -37,43 +45,60 @@ namespace Iconizer.Infrastructure.Services
                 // Busca el primer patrón que encaje
                 for (var i = 0; i < config.Files.Count; i++)
                 {
+                    _logger.LogDebug("Processing folder: {Folder}", folder);
                     var pattern = config.Files[i];
                     if (files.Select(f => Path.GetFileName(f)).Any(name => name.Contains(pattern, StringComparison.OrdinalIgnoreCase)))
                     {
                         matched = true;
                         iconPath = config.Icons[i];
+                        _logger.LogDebug("Pattern '{Pattern}' was found in {Folder}. it will use icon : {IconPath}", pattern, folder, iconPath);
                     }
                     if (matched) break;
                 }
 
                 if (matched && File.Exists(iconPath))
                 {
+                    _logger.LogInformation("Applying icon {IconPath} to folder {Folder}", iconPath, folder);
                     ApplyIcon(folder, iconPath);
                 }
                 else
                 {
+                    _logger.LogInformation("No matching pattern found for folder {Folder}. Removing icon if exists.", folder);
                     // Si no coincide ningún patrón, elimina cualquier ícono anterior
                     RemoveIconConfig(folder);
                 }
             }
+            _logger.LogInformation("Icon assignment completed. 😼");
             
         }
 
-        private void ApplyIcon(string folderPath, string sourceIconPath) {       
+        private void ApplyIcon(string folderPath, string sourceIconPath) {
+
             var icoDest = Path.Combine(folderPath, "iconizer.ico");
             var iniDest = Path.Combine(folderPath, "desktop.ini");
+            
+            if(File.Exists(icoDest) && File.Exists(iniDest))
+            {
+                // Si no hay icono ni ini, no hacemos nada
+                _logger.LogInformation("icon and ini file found in {FolderPath}, skipping icon assignment.\n", folderPath);
+                return;
+            }
 
             // 1) Borrado seguro de icoDest
-            SafeDelete(icoDest, maxRetries: 5, delayMs: 200);
+            _logger.LogDebug("Deleting existing icon file if exists: {IcoDest}", icoDest);
+            SafeDelete(icoDest, maxRetries: 5, delayMs: 200 , logger : _logger);
 
             // 2) Copia segura con overwrite
-            SafeCopy(sourceIconPath, icoDest, overwrite: true);
+            _logger.LogDebug("Copying icon from {SourceIconPath} to {IcoDest}", sourceIconPath, icoDest);
+            SafeCopy(sourceIconPath, icoDest, overwrite: true , logger : _logger);
 
             // 3) Prepara y borra desktop.ini si existe
+            _logger.LogDebug("Preparing desktop.ini at {IniDest}", iniDest);
             var iniContent = "[.ShellClassInfo]\r\nIconResource=iconizer.ico,0\r\n";
-            SafeDelete(iniDest, maxRetries: 5, delayMs: 200);
+            SafeDelete(iniDest, maxRetries: 5, delayMs: 200 , logger:_logger);
             File.WriteAllText(iniDest, iniContent, Encoding.Unicode);
-
+            
+            _logger.LogInformation("Setting attributes....");
             // 4) Ajuste de atributos
             File.SetAttributes(icoDest, FileAttributes.Hidden | FileAttributes.System);
             File.SetAttributes(iniDest, FileAttributes.Hidden | FileAttributes.System);
@@ -81,13 +106,14 @@ namespace Iconizer.Infrastructure.Services
             File.SetAttributes(folderPath, folderAttr | FileAttributes.System);
 
             // 5) Notificar al shell
+            _logger.LogInformation("Notifying shell about changes in {FolderPath}", folderPath);
             SHChangeNotify(0x00002000, 0x0005, folderPath, IntPtr.Zero);
         }
 
         /// <summary>
         /// Intenta borrar un archivo, quitando atributos y reintentando si está bloqueado.
         /// </summary>
-        private static void SafeDelete(string path, int maxRetries, int delayMs)
+        private static void SafeDelete(string path, int maxRetries, int delayMs , ILogger logger)
         {
             for (int attempt = 0; attempt < maxRetries; attempt++)
             {
@@ -113,12 +139,13 @@ namespace Iconizer.Infrastructure.Services
                 }
             }
             // Si falla todas las veces, deja que la excepción burbujee o registra un warning
+            logger.LogWarning("Failed to delete file {Path} after {MaxRetries} attempts.", path, maxRetries);
         }
 
         /// <summary>
         /// Copia un archivo, opcionalmente sobrescribiendo sin lanzar excepción.
         /// </summary>
-        private static void SafeCopy(string source, string dest, bool overwrite)
+        private static void SafeCopy(string source, string dest, bool overwrite , ILogger logger)
         {
             try
             {
@@ -127,7 +154,7 @@ namespace Iconizer.Infrastructure.Services
             catch (IOException ex) when (overwrite && File.Exists(dest))
             {
                 // Si era porque ya existe y pedimos overwrite, intenta de todos modos
-                SafeDelete(dest, maxRetries: 3, delayMs: 100);
+                SafeDelete(dest, maxRetries: 3, delayMs: 100 , logger: logger);
                 File.Copy(source, dest, false);
             }
         }
