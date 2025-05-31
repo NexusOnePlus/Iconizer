@@ -99,5 +99,15 @@ namespace Iconizer.Presentation
         {
             _iconService.CleanDesktop();
         }
+
+        private void BtButton_Click(object sender, RoutedEventArgs e)
+        {
+            Hide();
+        }
+
+        private void Window_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            DragMove();
+        }
     }
 }

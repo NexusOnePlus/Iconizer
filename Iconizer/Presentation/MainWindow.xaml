@@ -5,18 +5,23 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         ResizeMode="NoResize"
+        MouseLeftButtonDown="Window_MouseLeftButtonDown"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        
         WindowStartupLocation="CenterScreen"
-        Title="Iconizer" Height="500" Width="800" Icon="pack://Application:,,,/Assets/extension_icon.ico">
+        Title="Iconizer Settings" Height="500" Width="800" Icon="pack://Application:,,,/Assets/extension_icon.ico">
 
-    <Border Background="#1c1922" Padding="25,10,25,5">
+    <Border Background="#1c1922" Padding="25,10,25,5" CornerRadius="20">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="40" />
                 <RowDefinition />
                 <RowDefinition Height="50" />
             </Grid.RowDefinitions>
-            <Grid>
+            <Grid >
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
                     <ColumnDefinition />
                     <ColumnDefinition />
                 </Grid.ColumnDefinitions>
@@ -24,11 +29,21 @@
                     Grid.Row="0"
                     VerticalAlignment="Center"
 
-                    Foreground="White" Name="TbHello" Text="Settings"
+                    Foreground="White" Name="TbHello" Text="Iconizer Settings"
                     FontSize="28" FontWeight="SemiBold" HorizontalAlignment="Left" />
-                <Button Grid.Column="1" Name="LoadIcons" Width="70" Height="30" VerticalAlignment="Center"
+                <Button Grid.Column="1" Name="LoadIcons" Width="106" Height="30"
+                        HorizontalAlignment="Center"
+                        Foreground="Black"
+                        Background="White"
+                        Content="Import Icons" FontSize="15" />
+                <Button Grid.Column="2" Name="BtButton" Width="70" Height="30" VerticalAlignment="Center"
                         HorizontalAlignment="Right"
-                        Content="Save" FontSize="15" />
+                        Background="Red"
+                        Click="BtButton_Click"
+                        Content="Close" FontSize="15">
+
+                </Button>
+
                 <!--Click="BtButton_OnClick"-->
             </Grid>
             <Border Grid.Row="1" Background="#3a3742" Padding="05" Margin="0,20,0,0"
