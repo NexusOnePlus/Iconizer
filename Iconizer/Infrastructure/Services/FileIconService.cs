@@ -74,27 +74,49 @@ namespace Iconizer.Infrastructure.Services
 
         private void ApplyIcon(string folderPath, string sourceIconPath) {
 
-            var icoDest = Path.Combine(folderPath, "iconizer.ico");
+            string uniqueName = $"iconizer_{DateTime.Now:yyyyMMddHHmmss}.ico";
+            var icoDest = Path.Combine(folderPath, uniqueName);
             var iniDest = Path.Combine(folderPath, "desktop.ini");
-            
-            if(File.Exists(icoDest) && File.Exists(iniDest))
-            {
-                // Si no hay icono ni ini, no hacemos nada
-                _logger.LogInformation("icon and ini file found in {FolderPath}, skipping icon assignment.\n", folderPath);
-                return;
-            }
+
+            //if (File.Exists(icoDest) && File.Exists(iniDest))
+            //{
+            //    // Si no hay icono ni ini, no hacemos nada
+            //    _logger.LogInformation("icon and ini file found in {FolderPath}, skipping icon assignment.\n", folderPath);
+            //    return;
+            //}
 
             // 1) Borrado seguro de icoDest
-            _logger.LogDebug("Deleting existing icon file if exists: {IcoDest}", icoDest);
-            SafeDelete(icoDest, maxRetries: 5, delayMs: 200 , logger : _logger);
+            //_logger.LogDebug("Deleting existing icon file if exists: {IcoDest}", icoDest);
+            //SafeDelete(icoDest, maxRetries: 5, delayMs: 200 , logger : _logger);
+
+            var oldIcons = Directory.GetFiles(folderPath, "iconizer_*.ico", SearchOption.TopDirectoryOnly);
+            foreach (var oldIconPath in oldIcons)
+            {
+                try
+                {
+                    // 1) Quita cualquier atributo (Hidden, System, ReadOnly) para que se pueda eliminar
+                    File.SetAttributes(oldIconPath, FileAttributes.Normal);
+                    File.Delete(oldIconPath);
+                    _logger.LogDebug("Deleted old icon file: {OldIconPath}", oldIconPath);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to delete old icon: {OldIconPath}", oldIconPath);
+                    // Opcional: seguir intentando si quieres más lógica de retry
+                }
+            }
+
+
 
             // 2) Copia segura con overwrite
+            File.SetAttributes(folderPath, FileAttributes.Normal);
+
             _logger.LogDebug("Copying icon from {SourceIconPath} to {IcoDest}", sourceIconPath, icoDest);
             SafeCopy(sourceIconPath, icoDest, overwrite: true , logger : _logger);
 
             // 3) Prepara y borra desktop.ini si existe
             _logger.LogDebug("Preparing desktop.ini at {IniDest}", iniDest);
-            var iniContent = "[.ShellClassInfo]\r\nIconResource=iconizer.ico,0\r\n";
+            var iniContent = $"[.ShellClassInfo]\r\nIconResource={uniqueName},0\r\n";
             SafeDelete(iniDest, maxRetries: 5, delayMs: 200 , logger:_logger);
             File.WriteAllText(iniDest, iniContent, Encoding.Unicode);
             
@@ -162,13 +184,30 @@ namespace Iconizer.Infrastructure.Services
 
         private static  void RemoveIconConfig(string folderPath)
         {
+            var files = Directory.GetFiles(folderPath, "*.ico", SearchOption.TopDirectoryOnly);
+            foreach (var file in files)
+            {
+                try
+                {
+                    if(file.Contains("iconizer_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        File.Delete(file);
+                        continue;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Log or handle the exception as needed
+                    Console.WriteLine($"Error deleting file {file}: {ex.Message}");
+                }
+            }
             var ini = Path.Combine(folderPath, "desktop.ini");
-            var ico = Path.Combine(folderPath, "iconizer.ico");
+            //var ico = Path.Combine(folderPath, "iconizer.ico");
 
             if (File.Exists(ini))
                 File.Delete(ini);
-            if (File.Exists(ico))
-                File.Delete(ico);
+            //if (File.Exists(ico))
+                //File.Delete(ico);
 
             SHChangeNotify(0x00002000, 0x0005, folderPath, IntPtr.Zero);
         }

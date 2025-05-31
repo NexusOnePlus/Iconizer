@@ -17,16 +17,11 @@ namespace Iconizer.Infrastructure.Services
                 string [] dataFiles = Directory.GetFiles(folder, "*.*", SearchOption.TopDirectoryOnly);
                 foreach (var file in dataFiles)
                 {
-                    switch (Path.GetFileName(file))
+                    if (Path.GetFileName(file).Contains("iconizer_") || Path.GetFileName(file).Contains("desktop.ini"))
                     {
-                        case "desktop.ini":
-                        case "iconizer.ico":
-                            File.Delete(file);
-                            break;
+                        File.Delete(file);
                     }
-                
                 }
-            
             }
         }
     }

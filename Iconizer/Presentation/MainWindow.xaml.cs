@@ -130,6 +130,9 @@ namespace Iconizer.Presentation
                     if (!filename.Contains(".ico"))
                     {
                         InputsPanel.Children.Add(CreateControl("", ConvertToIco(filename)));
+                    } else
+                    {
+                        InputsPanel.Children.Add(CreateControl("", filename));
                     }
                 }
             }
