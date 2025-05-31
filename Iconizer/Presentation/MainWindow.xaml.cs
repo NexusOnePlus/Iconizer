@@ -10,13 +10,17 @@
  *  - Validaciones de extensiones → Application/Validators/ExtensionValidator.cs
  */
 
-using System.IO;
-using System.Windows;
-using Iconizer.Presentation.View.UserControls;
-using Iconizer.Domain;
 using Iconizer.Application.Services;
 using Iconizer.Application.Validators;
+using Iconizer.Domain;
 using Iconizer.Infrastructure;
+using Iconizer.Presentation.View.UserControls;
+using Microsoft.Win32;
+using System.Diagnostics;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
+using System.Windows;
 
 namespace Iconizer.Presentation
 {
@@ -108,6 +112,78 @@ namespace Iconizer.Presentation
         private void Window_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             DragMove();
+        }
+
+        private void LoadIcons_Click(object sender, RoutedEventArgs e)
+        {
+            var openDialog = new OpenFileDialog
+            {
+                Title = "Select Icon Images",
+                Filter = "Supported Images|*.png;*.jpg;*.jpeg;*.bmp;*.ico;",
+                Multiselect = true
+            };
+            if (openDialog.ShowDialog() == true)
+            {
+                foreach (var filename in openDialog.FileNames)
+                {
+                    Debug.WriteLine(filename);
+                    if (!filename.Contains(".ico"))
+                    {
+                        InputsPanel.Children.Add(CreateControl("", ConvertToIco(filename)));
+                    }
+                }
+            }
+        }
+
+        string ConvertToIco(string imagePath)
+        {
+            if (!File.Exists(imagePath))
+            {
+                MessageBox.Show("File not found: " + imagePath, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return string.Empty;
+            }
+            if (!Directory.Exists(ConfigPaths.IconsFolder))
+            {
+                Directory.CreateDirectory(ConfigPaths.IconsFolder);
+            }
+            string baseName = Path.GetFileNameWithoutExtension(imagePath);
+            string uniqueName = $"{baseName}_{DateTime.Now:yyyyMMddHHmmss}.ico";
+
+            string outputIconPath = Path.Combine(ConfigPaths.IconsFolder, uniqueName);
+
+            using (var originalBmp = new Bitmap(imagePath))
+            {
+                using (var resizedBmp = new Bitmap(originalBmp, new System.Drawing.Size(256, 256)))
+                {
+                    using (var fs = new FileStream(outputIconPath, FileMode.Create))
+                    using (var writer = new BinaryWriter(fs))
+                    {
+                        using (var msPng = new MemoryStream())
+                        {
+                            resizedBmp.Save(msPng, ImageFormat.Png);
+                            byte[] pngBytes = msPng.ToArray();
+
+                            writer.Write((short)0);
+                            writer.Write((short)1);
+                            writer.Write((short)1);
+
+                            writer.Write((byte)(resizedBmp.Width >= 256 ? 0 : resizedBmp.Width));
+                            writer.Write((byte)(resizedBmp.Height >= 256 ? 0 : resizedBmp.Height));
+                            writer.Write((byte)0);
+                            writer.Write((byte)0);
+                            writer.Write((short)1);
+                            writer.Write((short)32);
+
+                            writer.Write(pngBytes.Length);
+
+                            writer.Write(22);
+
+                            writer.Write(pngBytes);
+                        }
+                    }
+                }
+            }
+            return outputIconPath;
         }
     }
 }

@@ -35,6 +35,7 @@
                         HorizontalAlignment="Center"
                         Foreground="Black"
                         Background="White"
+                        Click="LoadIcons_Click"
                         Content="Import Icons" FontSize="15" />
                 <Button Grid.Column="2" Name="BtButton" Width="70" Height="30" VerticalAlignment="Center"
                         HorizontalAlignment="Right"

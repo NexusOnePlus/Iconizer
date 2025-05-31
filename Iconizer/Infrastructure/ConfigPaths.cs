@@ -33,5 +33,8 @@ namespace Iconizer.Infrastructure
         /// </summary>
         public static string ConfigFilePath
             => Path.Combine(ConfigFolder, "config.json");
+
+        public static string IconsFolder
+            => Path.Combine(ConfigFolder, "Icons");
     }
 }
