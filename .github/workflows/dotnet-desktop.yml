@@ -1,38 +1,63 @@
-name: .NET Core Desktop Debug Version
+name: Build Iconizer App and Installer
 
 on:
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: windows-2022  # Usamos una imagen que incluye Visual Studio con WAP
-
-    strategy:
-      matrix:
-        configuration: [Debug]
-
+    runs-on: windows-latest
     env:
+      Configuration: Debug
       Solution_Name: Iconizer.sln
+      Project_Path: Iconizer/Iconizer.csproj
       Wap_Project_Path: IconizerInstaller/IconizerInstaller.wapproj
 
     steps:
-    - name: Checkout code
+    - name: Checkout repository
       uses: actions/checkout@v4
+
+    - name: Setup .NET 9
+      uses: actions/setup-dotnet@v4
       with:
-        fetch-depth: 0
+        dotnet-version: 9.0.x
 
-    - name: Setup MSBuild
-      uses: microsoft/setup-msbuild@v2
     
-    - name: Restore packages for .csproj
-      run: dotnet restore Iconizer/Iconizer.csproj
+    - name: dotnet restore Iconizer.csproj
+      run: dotnet restore ${{ env.Project_Path }}
 
-    - name: Restore packages for .wapproj 
-      run: msbuild IconizerInstaller/IconizerInstaller.wapproj /t:Restore
+    
+    - name: msbuild restore WAP project
+      run: msbuild ${{ env.Wap_Project_Path }} /t:Restore
 
-    - name: Build WAP Project
+    
+    - name: Build WAP Installer
       run: |
-        msbuild $env:Wap_Project_Path /p:Configuration=${{ matrix.configuration }} /p:AppxBundle=Always /p:UapAppxPackageBuildMode=StoreUpload
-    - name: Publish Self-Contained
-      run: dotnet publish Iconizer/Iconizer.csproj --configuration Debug --runtime win-x64 --self-contained true --output ./debug-build
+        msbuild ${{ env.Wap_Project_Path }} ^
+          /p:Configuration=${{ env.Configuration }} ^
+          /p:AppxBundle=Always ^
+          /p:UapAppxPackageBuildMode=StoreUpload
 
+   
+    - name: Publish self-contained .exe
+      run: |
+        dotnet publish ${{ env.Project_Path }} ^
+          --configuration ${{ env.Configuration }} ^
+          --runtime win-x64 ^
+          --self-contained true ^
+          --output ./debug-build
+
+    
+    - name: Upload Debug Executable
+      uses: actions/upload-artifact@v4
+      with:
+        name: Debug-Self-Contained-Exe
+        path: ./debug-build
+
+    
+    - name: Upload App Installer Package
+      uses: actions/upload-artifact@v4
+      with:
+        name: Installer-Package
+        path: |
+          **/*.appxbundle
+          **/*.appx
