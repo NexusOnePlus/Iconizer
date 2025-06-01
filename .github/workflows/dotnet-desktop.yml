@@ -1,43 +1,32 @@
 name: .NET Core Desktop Debug Version
+
 on:
   workflow_dispatch:
+
 jobs:
   build:
+    runs-on: windows-2022  # Usamos una imagen que incluye Visual Studio con WAP
+
     strategy:
       matrix:
         configuration: [Debug]
-    runs-on: windows-latest
-    
+
     env:
       Solution_Name: Iconizer.sln
-      Project_Path: Iconizer/Iconizer.csproj
-    
+      Wap_Project_Path: IconizerInstaller/IconizerInstaller.wapproj
+
     steps:
-    - name: Checkout
+    - name: Checkout code
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-        
-    # Install the .NET Core workload
-    - name: Install .NET Core
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 9.0.x
-    
-    - name: Restore dependencies
-      run: dotnet restore ${{ env.Solution_Name }}
-      
-    - name: Build
-      run: dotnet build ${{ env.Solution_Name }} --configuration ${{ matrix.configuration }} --no-restore
-      
-    - name: Test
-      run: dotnet test ${{ env.Solution_Name }} --configuration ${{ matrix.configuration }} --no-build
-      
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Build WAP Project
+      run: |
+        msbuild $env:Wap_Project_Path /p:Configuration=${{ matrix.configuration }} /p:AppxBundle=Always /p:UapAppxPackageBuildMode=StoreUpload
     - name: Publish Self-Contained
-      run: dotnet publish ${{ env.Project_Path }} --configuration ${{ matrix.configuration }} --runtime win-x64 --self-contained true --output ./debug-build
-      
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: Debug-Self-Contained-Application
-        path: ./debug-build
+      run: dotnet publish Iconizer/Iconizer.csproj --configuration Debug --runtime win-x64 --self-contained true --output ./debug-build
+
