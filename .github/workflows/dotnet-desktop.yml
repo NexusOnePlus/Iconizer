@@ -21,15 +21,17 @@ jobs:
       with:
         dotnet-version: 9.0.x
 
-    
+    - name: Install Visual Studio Build Tools
+      run: |
+        choco install visualstudio2022-buildtools -y --version=17.0.0
+        refreshenv
+
     - name: dotnet restore Iconizer.csproj
       run: dotnet restore ${{ env.Project_Path }}
 
-    
     - name: msbuild restore WAP project
       run: msbuild ${{ env.Wap_Project_Path }} /t:Restore
 
-    
     - name: Build WAP Installer
       run: |
         msbuild ${{ env.Wap_Project_Path }} ^
@@ -37,7 +39,6 @@ jobs:
           /p:AppxBundle=Always ^
           /p:UapAppxPackageBuildMode=StoreUpload
 
-   
     - name: Publish self-contained .exe
       run: |
         dotnet publish ${{ env.Project_Path }} ^
@@ -46,14 +47,12 @@ jobs:
           --self-contained true ^
           --output ./debug-build
 
-    
     - name: Upload Debug Executable
       uses: actions/upload-artifact@v4
       with:
         name: Debug-Self-Contained-Exe
         path: ./debug-build
 
-    
     - name: Upload App Installer Package
       uses: actions/upload-artifact@v4
       with:
