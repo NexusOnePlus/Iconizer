@@ -23,6 +23,12 @@ jobs:
 
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v2
+    
+    - name: Restore packages for .csproj
+      run: dotnet restore Iconizer/Iconizer.csproj
+
+    - name: Restore packages for .wapproj 
+      run: msbuild IconizerInstaller/IconizerInstaller.wapproj /t:Restore
 
     - name: Build WAP Project
       run: |
