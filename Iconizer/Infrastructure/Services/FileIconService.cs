@@ -43,30 +43,34 @@ namespace Iconizer.Infrastructure.Services
                 string iconPath = null!;
 
                 // Busca el primer patrón que encaje
-                for (var i = 0; i < config.Files.Count; i++)
+                if (config != null)
                 {
-                    _logger.LogDebug("Processing folder: {Folder}", folder);
-                    var pattern = config.Files[i];
-                    if (files.Select(f => Path.GetFileName(f)).Any(name => name.Contains(pattern, StringComparison.OrdinalIgnoreCase)))
+                    for (var i = 0; i < config.Files.Count; i++)
                     {
-                        matched = true;
-                        iconPath = config.Icons[i];
-                        _logger.LogDebug("Pattern '{Pattern}' was found in {Folder}. it will use icon : {IconPath}", pattern, folder, iconPath);
+                        _logger.LogDebug("Processing folder: {Folder}", folder);
+                        var pattern = config.Files[i];
+                        if (files.Select(f => Path.GetFileName(f)).Any(name => name.Contains(pattern, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            matched = true;
+                            iconPath = config.Icons[i];
+                            _logger.LogDebug("Pattern '{Pattern}' was found in {Folder}. it will use icon : {IconPath}", pattern, folder, iconPath);
+                        }
+                        if (matched) break;
                     }
-                    if (matched) break;
-                }
 
-                if (matched && File.Exists(iconPath))
-                {
-                    _logger.LogInformation("Applying icon {IconPath} to folder {Folder}", iconPath, folder);
-                    ApplyIcon(folder, iconPath);
+                    if (matched && File.Exists(iconPath))
+                    {
+                        _logger.LogInformation("Applying icon {IconPath} to folder {Folder}", iconPath, folder);
+                        ApplyIcon(folder, iconPath);
+                    }
+                    else
+                    {
+                        _logger.LogInformation("No matching pattern found for folder {Folder}. Removing icon if exists.", folder);
+                        // Si no coincide ningún patrón, elimina cualquier ícono anterior
+                        RemoveIconConfig(folder);
+                    }
                 }
-                else
-                {
-                    _logger.LogInformation("No matching pattern found for folder {Folder}. Removing icon if exists.", folder);
-                    // Si no coincide ningún patrón, elimina cualquier ícono anterior
-                    RemoveIconConfig(folder);
-                }
+                
             }
             _logger.LogInformation("Icon assignment completed. 😼");
             
