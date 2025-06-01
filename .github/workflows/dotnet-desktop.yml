@@ -23,8 +23,10 @@ jobs:
 
     - name: Install Visual Studio Build Tools
       run: |
-        choco install visualstudio2022-buildtools -y --version=17.0.0
-        refreshenv
+        choco install visualstudio2022buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.ManagedDesktopBuildTools --includeRecommended --includeOptional" --yes
+    - name: Set up MSBuild
+      run: |
+        "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\Common7\Tools\VsDevCmd.bat"
 
     - name: dotnet restore Iconizer.csproj
       run: dotnet restore ${{ env.Project_Path }}
@@ -34,10 +36,7 @@ jobs:
 
     - name: Build WAP Installer
       run: |
-        msbuild ${{ env.Wap_Project_Path }} ^
-          /p:Configuration=${{ env.Configuration }} ^
-          /p:AppxBundle=Always ^
-          /p:UapAppxPackageBuildMode=StoreUpload
+        msbuild ${{ env.Wap_Project_Path }} /p:Configuration=${{ env.Configuration }} /p:AppxBundle=Always /p:UapAppxPackageBuildMode=StoreUpload
 
     - name: Publish self-contained .exe
       run: |
