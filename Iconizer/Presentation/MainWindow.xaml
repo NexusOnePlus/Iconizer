@@ -7,8 +7,9 @@
         ResizeMode="NoResize"
         MouseLeftButtonDown="Window_MouseLeftButtonDown"
         WindowStyle="None"
+        Background="Transparent"
         AllowsTransparency="True"
-        
+        Closed="Window_Closed"
         WindowStartupLocation="CenterScreen"
         Title="Iconizer Settings" Height="500" Width="800" Icon="pack://Application:,,,/Assets/extension_icon.ico">
 

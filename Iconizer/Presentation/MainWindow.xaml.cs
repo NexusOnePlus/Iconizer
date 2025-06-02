@@ -188,5 +188,10 @@ namespace Iconizer.Presentation
             }
             return outputIconPath;
         }
+
+        private void Window_Closed(object sender, EventArgs e)
+        {
+            Hide();
+        }
     }
 }

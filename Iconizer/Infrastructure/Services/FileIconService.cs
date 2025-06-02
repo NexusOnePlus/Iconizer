@@ -182,6 +182,7 @@ namespace Iconizer.Infrastructure.Services
                 // Si era porque ya existe y pedimos overwrite, intenta de todos modos
                 SafeDelete(dest, maxRetries: 3, delayMs: 100 , logger: logger);
                 File.Copy(source, dest, false);
+                Console.WriteLine($"Error deleting : {ex.Message}");
             }
         }
 

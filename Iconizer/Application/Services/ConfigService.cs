@@ -6,7 +6,7 @@ namespace Iconizer.Application.Services
 {
     public class ConfigService : IConfigService
     {
-        private readonly JsonSerializerOptions _options = 
+        private readonly JsonSerializerOptions _options =
             new JsonSerializerOptions { WriteIndented = true };
 
         public ConfigData? Load(string path)
@@ -21,6 +21,9 @@ namespace Iconizer.Application.Services
         public void Save(ConfigData config, string path)
         {
             var dir = Path.GetDirectoryName(path);
+            if (dir == null)
+                throw new ArgumentException("The provided path does not contain a valid directory.", nameof(path));
+
             if (!Directory.Exists(dir))
                 Directory.CreateDirectory(dir);
 

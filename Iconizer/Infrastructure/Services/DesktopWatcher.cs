@@ -30,14 +30,15 @@ namespace Iconizer.Infrastructure.Services
                 IncludeSubdirectories = false,
                 NotifyFilter = NotifyFilters.DirectoryName
             };
-            _rootWatcher.Created += async (s, e) => await AddFolderWatcherAsync(e.FullPath);
+            _rootWatcher.Created += (s, e) => AddFolderWatcherAsync(e.FullPath);
             _rootWatcher.Deleted += (s, e) => RemoveFolderWatcher(e.FullPath);
-            _rootWatcher.Renamed += async (s, e) =>
+            _rootWatcher.Renamed += (s, e) =>
             {
                 RemoveFolderWatcher(e.OldFullPath);
-                await AddFolderWatcherAsync(e.FullPath);
+                AddFolderWatcherAsync(e.FullPath);
             };
         }
+
         private void DisableAllWatchers()
         {
             _rootWatcher.EnableRaisingEvents = false;
@@ -52,13 +53,12 @@ namespace Iconizer.Infrastructure.Services
                 fsw.EnableRaisingEvents = true;
         }
 
-        
-        
         public async Task StartAsync()
         {
             foreach (var folder in Directory.GetDirectories(_desktopPath))
-                await AddFolderWatcherAsync(folder);
+                AddFolderWatcherAsync(folder);
             _rootWatcher.EnableRaisingEvents = true;
+            await Task.CompletedTask;
         }
 
         public async Task ReloadAsync()
@@ -71,7 +71,7 @@ namespace Iconizer.Infrastructure.Services
             await StartAsync();
         }
 
-        private async Task AddFolderWatcherAsync(string folder)
+        private void AddFolderWatcherAsync(string folder)
         {
             if (!Directory.Exists(folder) || _folderWatchers.ContainsKey(folder)) return;
 
