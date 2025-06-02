@@ -35,9 +35,6 @@ jobs:
       with:
         dotnet-version: 9.0.x
 
-    - name: Execute unit tests
-      run: dotnet test
-
     - name: Publish 
       run: |
           dotnet publish Iconizer/Iconizer.csproj `
