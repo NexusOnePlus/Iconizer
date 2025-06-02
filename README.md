@@ -1,6 +1,6 @@
 # Iconizer
 [![CodeQL Advanced](https://github.com/NexusOnePlus/Iconizer/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/NexusOnePlus/Iconizer/actions/workflows/codeql.yml)
-[![.NET Core Desktop](https://github.com/NexusOnePlus/Iconizer/actions/workflows/dotnet-desktop.yml/badge.svg)](https://github.com/NexusOnePlus/Iconizer/actions/workflows/dotnet-desktop.yml)
+[![Desktop Installer](https://github.com/NexusOnePlus/Iconizer/actions/workflows/dotnet-desktop-installer.yml/badge.svg)](https://github.com/NexusOnePlus/Iconizer/actions/workflows/dotnet-desktop-installer.yml)
 
 Iconizer is a modern WPF application that automatically adds programming language and application icons to Windows folders, enhancing folder navigation and visual organization.
 
