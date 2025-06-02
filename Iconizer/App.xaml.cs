@@ -1,5 +1,4 @@
 ﻿
-using System.Windows;
 using Iconizer.Application.Services;
 using Iconizer.Application.Validators;
 using Iconizer.Infrastructure.Services;
@@ -7,6 +6,8 @@ using Iconizer.Presentation;
 using Infrastructure.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Windows;
+using Velopack;
 
 namespace Iconizer
 {
@@ -16,9 +17,10 @@ namespace Iconizer
         private ITrayIconService? _trayService;
         protected override async void OnStartup(StartupEventArgs e)
         {
+            VelopackApp.Build().Run();
             base.OnStartup(e);
-            
-            
+
+
             var services = new ServiceCollection();
             // Application
             services.AddSingleton<IConfigService, ConfigService>();
@@ -34,19 +36,19 @@ namespace Iconizer
                 builder.AddConsole();
                 builder.SetMinimumLevel(LogLevel.Trace);
             });
-            
+
             _provider = services.BuildServiceProvider();
-            
+
             _trayService = _provider.GetRequiredService<ITrayIconService>();
             await _trayService.InitializeAsync();
-            
+
             var watcher = _provider.GetRequiredService<IDesktopWatcher>();
             await watcher.StartAsync();
 
             var window = _provider.GetRequiredService<MainWindow>();
             MainInstance = window;
             MainInstance.Closing += MainIsClosing;
-            MainInstance.Closed  += (_, _) => MainInstance = null;
+            MainInstance.Closed += (_, _) => MainInstance = null;
             MainInstance.Show();
         }
 
@@ -64,13 +66,13 @@ namespace Iconizer
         {
             Current.Dispatcher.Invoke(() =>
             {
-                if (MainInstance == null && 
-                    Current is App app && 
+                if (MainInstance == null &&
+                    Current is App app &&
                     app._provider != null)
                 {
                     MainInstance = app._provider.GetRequiredService<MainWindow>();
                     MainInstance.Closing += MainIsClosing;
-                    MainInstance.Closed  += (_, _) => MainInstance = null;
+                    MainInstance.Closed += (_, _) => MainInstance = null;
                 }
 
                 MainInstance!.Show();
