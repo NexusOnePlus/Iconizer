@@ -23,7 +23,7 @@ jobs:
     runs-on: windows-latest
     env:
       RELEASE_VERSION: ${{ github.event.inputs.version }}
-    
+      SEMVER_VERSION: ${{ github.event.inputs.version.substring(1) }}
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -53,10 +53,9 @@ jobs:
       run: |
           vpk pack \
             -u Iconizer.App \
-            -v ${{ env.RELEASE_VERSION }} \
+            -v ${{ env.SEMVER_VERSION }} \
             -p publish \
             -e Iconizer.exe \
-            --token ${{ secrets.GITHUB_TOKEN }}
       shell: bash
       
     - name: Release
@@ -71,5 +70,11 @@ jobs:
             Iconizer.App-win-Setup.exe
       env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+    - name: Upload publish folder as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: publish-folder
+        path: publish
 
         
