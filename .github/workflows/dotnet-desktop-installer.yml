@@ -64,8 +64,8 @@ jobs:
         body: |
             ${{ github.event.inputs.release_notes }}
         files: |
-            Iconizer.App-win-Portable.zip
-            Iconizer.App-win-Setup.exe
+            Releases/Iconizer.App-win-Portable.zip
+            Releases/Iconizer.App-win-Setup.exe
       env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
