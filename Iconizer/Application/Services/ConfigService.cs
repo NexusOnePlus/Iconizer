@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Text.Json;
 using Iconizer.Domain;
+using Microsoft.Extensions.Logging;
 
 namespace Iconizer.Application.Services
 {
@@ -8,6 +9,13 @@ namespace Iconizer.Application.Services
     {
         private readonly JsonSerializerOptions _options =
             new JsonSerializerOptions { WriteIndented = true };
+
+        private readonly ILogger<ConfigService> _logger;
+
+        public ConfigService(ILogger<ConfigService> logger)
+        {
+            _logger = logger;
+        }
 
         public ConfigData? Load(string path)
         {
@@ -20,6 +28,7 @@ namespace Iconizer.Application.Services
 
         public void Save(ConfigData config, string path)
         {
+            _logger.LogInformation($"Saving config to {path}");
             var dir = Path.GetDirectoryName(path);
             if (dir == null)
                 throw new ArgumentException("The provided path does not contain a valid directory.", nameof(path));

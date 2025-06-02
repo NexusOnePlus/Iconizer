@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
+using Microsoft.Extensions.Logging;
 
 namespace Iconizer.Infrastructure.Services
 {
@@ -10,8 +10,19 @@ namespace Iconizer.Infrastructure.Services
 
     public class Cleaner : ICleaner
     {
-        public void Clean(IEnumerable<string> folders)
+        private readonly ILogger<Cleaner> _logger;
+        public Cleaner(ILogger<Cleaner> logger)
         {
+            _logger = logger;
+        }
+        public void Clean(IEnumerable<string>? folders)
+        {
+            if (folders == null)
+            {
+                _logger.LogWarning("No folders provided for cleaning.");
+                return;
+            }
+            _logger.LogInformation("Starting cleaning process for folders.");
             foreach (var folder in folders)
             {
                 string [] dataFiles = Directory.GetFiles(folder, "*.*", SearchOption.TopDirectoryOnly);

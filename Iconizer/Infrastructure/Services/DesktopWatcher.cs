@@ -30,9 +30,9 @@ namespace Iconizer.Infrastructure.Services
                 IncludeSubdirectories = false,
                 NotifyFilter = NotifyFilters.DirectoryName
             };
-            _rootWatcher.Created += (s, e) => AddFolderWatcherAsync(e.FullPath);
-            _rootWatcher.Deleted += (s, e) => RemoveFolderWatcher(e.FullPath);
-            _rootWatcher.Renamed += (s, e) =>
+            _rootWatcher.Created += (_, e) => AddFolderWatcherAsync(e.FullPath);
+            _rootWatcher.Deleted += (_, e) => RemoveFolderWatcher(e.FullPath);
+            _rootWatcher.Renamed += (_, e) =>
             {
                 RemoveFolderWatcher(e.OldFullPath);
                 AddFolderWatcherAsync(e.FullPath);
@@ -87,8 +87,8 @@ namespace Iconizer.Infrastructure.Services
                 IncludeSubdirectories = false,
                 NotifyFilter = NotifyFilters.FileName
             };
-            fsw.Created += async (s, e) => await Debounce(folder);
-            fsw.Deleted += async (s, e) => await Debounce(folder);
+            fsw.Created += async (_, _) => await Debounce(folder);
+            fsw.Deleted += async (_, _) => await Debounce(folder);
             fsw.EnableRaisingEvents = true;
 
             _folderWatchers[folder] = fsw;
@@ -107,7 +107,7 @@ namespace Iconizer.Infrastructure.Services
         {
             
             // Cancel previous if existe
-            if (_debounceTokens[folder] is CancellationTokenSource existing)
+            if (_debounceTokens[folder] is { } existing)
             {
                 existing.Cancel();
                 existing.Dispose();

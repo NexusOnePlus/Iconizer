@@ -21,6 +21,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Windows;
+using Microsoft.Extensions.Logging;
 
 namespace Iconizer.Presentation
 {
@@ -29,14 +30,17 @@ namespace Iconizer.Presentation
         private readonly IConfigService _configService;
         private readonly IIconAssignmentService _iconService;
         private readonly IExtensionValidator _validator;
+        private readonly ILogger<MainWindow> _logger;
+
 
         public MainWindow(
             IConfigService configService,
             IIconAssignmentService iconService,
-            IExtensionValidator validator)
+            IExtensionValidator validator , ILogger<MainWindow> logger)
         {
             InitializeComponent();
 
+            _logger = logger;
             _configService = configService;
             _iconService = iconService;
             _validator = validator;
@@ -46,6 +50,7 @@ namespace Iconizer.Presentation
 
         private void LoadConfig()
         {
+            _logger.LogInformation("Loading configuration from {ConfigPath}", ConfigPaths.ConfigFilePath);
             var config = _configService.Load(ConfigPaths.ConfigFilePath);
             InputsPanel.Children.Clear();
 
@@ -101,11 +106,13 @@ namespace Iconizer.Presentation
 
         private void ResetConfigButton_OnClick(object sender, RoutedEventArgs e)
         {
+            _logger.LogInformation("Resetting icons of folders");
             _iconService.CleanDesktop();
         }
 
         private void BtButton_Click(object sender, RoutedEventArgs e)
         {
+            _logger.LogInformation("Hiding MainWindow instead of closing");
             Hide();
         }
 
@@ -116,6 +123,7 @@ namespace Iconizer.Presentation
 
         private void LoadIcons_Click(object sender, RoutedEventArgs e)
         {
+            _logger.LogInformation("Opening file dialog to select icon images");
             var openDialog = new OpenFileDialog
             {
                 Title = "Select Icon Images",
@@ -140,6 +148,7 @@ namespace Iconizer.Presentation
 
         string ConvertToIco(string imagePath)
         {
+            _logger.LogInformation("Converting image to ICO: {ImagePath}", imagePath);
             if (!File.Exists(imagePath))
             {
                 MessageBox.Show("File not found: " + imagePath, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -191,6 +200,7 @@ namespace Iconizer.Presentation
 
         private void Window_Closed(object sender, EventArgs e)
         {
+            _logger.LogInformation("MainWindow closed, hiding instead of closing.");
             Hide();
         }
     }

@@ -4,16 +4,23 @@ using System.Windows;
 using System.Windows.Controls;
 using Iconizer.Application.Services;
 using Iconizer;
+using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Services
 {
     public class TrayIconService : ITrayIconService, IDisposable
     {
         private TaskbarIcon? _trayIcon;
+        private readonly ILogger<TrayIconService> _logger;
+        public TrayIconService(ILogger<TrayIconService> logger)
+        {
+            _logger = logger;
+        }
 
         public async Task InitializeAsync()
         {
             // Icon loading
+            _logger.LogInformation("Initializing Tray Icon Service");
             var asm = Assembly.GetExecutingAssembly();
             using var stream = asm.GetManifestResourceStream("Iconizer.Assets.extension_icon.ico");
             if (stream != null)
@@ -30,6 +37,7 @@ namespace Infrastructure.Services
 
         private ContextMenu BuildMenu()
         {
+            _logger.LogInformation("Building Tray Icon Context Menu");
             var menu = new ContextMenu();
             var open = new MenuItem { Header = "Open" };
             open.Click += (_, _) => App.ShowWindow();
@@ -43,6 +51,7 @@ namespace Infrastructure.Services
 
         public void Dispose()
         {
+            _logger.LogInformation("Disposing Tray Icon Service");
             _trayIcon?.Dispose();
         }
     }
