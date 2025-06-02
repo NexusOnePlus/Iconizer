@@ -9,7 +9,7 @@ on:
       version:
         description: 'Release Version'
         required: true
-        default: 'v1.0.0'
+        default: '1.0.0'
       release_title:
         description: 'Title Release'
         required: false
@@ -21,9 +21,7 @@ on:
 jobs:
   build-pack:
     runs-on: windows-latest
-    env:
-      RELEASE_VERSION: ${{ github.event.inputs.version }}
-      SEMVER_VERSION: ${{ github.event.inputs.version.substring(1) }}
+
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -53,16 +51,16 @@ jobs:
       run: |
           vpk pack \
             -u Iconizer.App \
-            -v ${{ env.SEMVER_VERSION }} \
+            -v ${{ github.event.inputs.version }} \
             -p publish \
-            -e Iconizer.exe \
+            -e Iconizer.exe
       shell: bash
       
     - name: Release
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: ${{ github.event.inputs.version }}
-        name: ${{ github.event.inputs.release_title != '' && github.event.inputs.release_title || format('Release {0}', github.event.inputs.version) }}
+        tag_name: v${{ github.event.inputs.version }}
+        name: ${{ github.event.inputs.release_title != '' && github.event.inputs.release_title || format('Release v{0}', github.event.inputs.version) }}
         body: |
             ${{ github.event.inputs.release_notes }}
         files: |
