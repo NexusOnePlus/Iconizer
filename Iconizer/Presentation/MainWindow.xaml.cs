@@ -23,7 +23,6 @@ using System.IO;
 using System.Windows;
 using Microsoft.Extensions.Logging;
 using System.Windows.Forms;
-using IWshRuntimeLibrary;
 using File = System.IO.File;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 
@@ -220,9 +219,24 @@ namespace Iconizer.Presentation
                 {
                     try
                     {
-                        var shell = new WshShell();
+                        Type? wshType = Type.GetTypeFromProgID("WScript.Shell");
+                        if (wshType is null)
+                        {
+                            System.Windows.MessageBox.Show(
+                                "Cannot access WScript.Shell. Are you on Windows?.",
+                                "Iconizer",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Warning);
+                            AutoStart.IsChecked = false;
+                            return;
+                        }
+                        dynamic wshShell = Activator.CreateInstance(wshType)!;
 
-                        IWshShortcut link = (IWshShortcut)shell.CreateShortcut(filePath);
+
+                        dynamic link = wshShell.CreateShortcut(filePath);
+
+
+
                         link.TargetPath = exePath;
                         link.WorkingDirectory = Path.GetDirectoryName(exePath)!;
                         link.Description = "Iconizer - Windows Startup  ";
