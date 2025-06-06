@@ -134,7 +134,7 @@ namespace Iconizer.Presentation
             {
                 foreach (var filename in openDialog.FileNames)
                 {
-                    Debug.WriteLine(filename);
+                    Debug.WriteLine(filename, "   --  chosen one");
                     if (!filename.Contains(".ico"))
                     {
                         InputsPanel.Children.Add(CreateControl("", ConvertToIco(filename)));

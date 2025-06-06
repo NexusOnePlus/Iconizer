@@ -11,7 +11,7 @@ namespace Iconizer.Application.Validators
     {
         private static readonly HashSet<string> Allowed = new()
         {
-            ".cpp", ".rs", ".js", ".jsx", "package.json", ".py",
+            ".cpp", ".rs", ".js", ".jsx", "package.json", ".py",".cs",".xaml",
             "config.toml", "Cargo.toml", "bunfig.toml", "deno.json",
             ".ts", ".tsx", ".yml", ".json", ".lock", ".png" , ".java",".go",".php"
         };

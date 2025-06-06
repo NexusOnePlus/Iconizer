@@ -34,6 +34,7 @@ namespace Iconizer.Infrastructure.Services
                     }
                 }
             }
+            File.Delete(ConfigPaths.ConfigDiffs);
         }
     }
 }

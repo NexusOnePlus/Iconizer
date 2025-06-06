@@ -34,6 +34,9 @@ namespace Iconizer.Infrastructure
         public static string ConfigFilePath
             => Path.Combine(ConfigFolder, "config.json");
 
+        public static string ConfigDiffs
+            => Path.Combine(ConfigFolder, "diffs.json");
+
         public static string IconsFolder
             => Path.Combine(ConfigFolder, "Icons");
     }

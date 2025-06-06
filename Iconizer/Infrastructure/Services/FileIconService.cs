@@ -1,23 +1,28 @@
-﻿using System.IO;
-using System.Runtime.InteropServices;
-using System.Text;
+﻿using Iconizer.Application.Services;
 using Iconizer.Domain;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
+using System.IO;
+using System.Runtime.InteropServices;
+using System.Text;
 
 namespace Iconizer.Infrastructure.Services
 {
     public interface IFileIconService
     {
         void AssignIconsToFolders(ConfigData config);
+        void ApplyOneFolder(string folder, ConfigData config);
         IEnumerable<string> GetDesktopFolders();
     }
 
     public class FileIconService : IFileIconService
     {
         private readonly ILogger<FileIconService> _logger;
-        public FileIconService(ILogger<FileIconService> logger)
+        private readonly IConfigService _configService;
+        public FileIconService(ILogger<FileIconService> logger, IConfigService configDiff)
         {
             _logger = logger;
+            _configService = configDiff;
         }
         [DllImport("shell32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         private static extern void SHChangeNotify(
@@ -34,12 +39,156 @@ namespace Iconizer.Infrastructure.Services
 
         public void AssignIconsToFolders(ConfigData config)
         {
-            _logger.LogInformation("Assigning icons to desktop folders...");
-            foreach (var folder in GetDesktopFolders())
+
+
+            ConfigDiff? diffs = _configService.LoadDiff(ConfigPaths.ConfigDiffs);
+            if (diffs == null)
             {
+                ConfigDiff newone = new ConfigDiff();
+
+                _logger.LogInformation("Assigning icons to desktop folders...");
+                foreach (var folder in GetDesktopFolders())
+                {
+                    // Obtiene todos los archivos del folder
+                    var files = Directory.GetFiles(folder, "*.*", SearchOption.TopDirectoryOnly);
+                    var matched = false;
+                    string iconPath = null!;
+
+                    // Busca el primer patrón que encaje
+                    if (config != null)
+                    {
+                        for (var i = 0; i < config.Files.Count; i++)
+                        {
+                            _logger.LogDebug("Processing folder: {Folder}", folder);
+                            var pattern = config.Files[i];
+                            if (files.Select(f => Path.GetFileName(f)).Any(name => name.Contains(pattern, StringComparison.OrdinalIgnoreCase)))
+                            {
+                                matched = true;
+                                iconPath = config.Icons[i];
+                                _logger.LogDebug("Pattern '{Pattern}' was found in {Folder}. it will use icon : {IconPath}", pattern, folder, iconPath);
+                            }
+                            if (matched) break;
+                        }
+
+                        if (matched && File.Exists(iconPath))
+                        {
+                            _logger.LogInformation("Applying icon {IconPath} to folder {Folder}", iconPath, folder);
+                            ApplyIcon(folder, iconPath);
+                            newone.Targets.Add(folder);
+                            newone.Icons.Add(iconPath);
+                            newone.Files.Add(config.Files[config.Icons.IndexOf(iconPath)]);
+                        }
+                        else
+                        {
+                            _logger.LogInformation("No matching pattern found for folder {Folder}. Removing icon if exists.", folder);
+                            // Si no coincide ningún patrón, elimina cualquier ícono anterior
+                            RemoveIconConfig(folder);
+                        }
+                    }
+
+                }
+
+                _configService.SaveDiff(newone, ConfigPaths.ConfigDiffs);
+
+            }
+            else
+            {
+                List<string> fupdate = new List<string>();
+
+                List<string> folders = GetDesktopFolders().ToList();
+                for (var i = 0; i < diffs.Targets.Count; i++)
+                {
+                    if (config.Files.IndexOf(diffs.Files[i]) > 0)
+                    {
+                        var index = config.Files.IndexOf(diffs.Files[i]);
+                        if (config.Files[index] == diffs.Files[i] && config.Icons[index] == diffs.Icons[i])
+                        {
+                            fupdate.Add(diffs.Targets[i]);
+                        }
+                    }
+                }
+
+
+                _logger.LogInformation("Assigning icons to desktop folders...");
+                foreach (var folder in GetDesktopFolders())
+                {
+                    if(fupdate.Contains(folder)) continue;
+                    Debug.WriteLine(folder, " -- Not Ignored");
+                    // Obtiene todos los archivos del folder
+                    var files = Directory.GetFiles(folder, "*.*", SearchOption.TopDirectoryOnly);
+                    var matched = false;
+                    var patterstaken = string.Empty;
+                    string iconPath = null!;
+
+                    // Busca el primer patrón que encaje
+                    if (config != null)
+                    {
+                        for (var i = 0; i < config.Files.Count; i++)
+                        {
+                            _logger.LogDebug("Processing folder: {Folder}", folder);
+                            var pattern = config.Files[i];
+                            if (files.Select(f => Path.GetFileName(f)).Any(name => name.Contains(pattern, StringComparison.OrdinalIgnoreCase)))
+                            {
+                                matched = true;
+                                patterstaken = pattern;
+                                iconPath = config.Icons[i];
+                                _logger.LogDebug("Pattern '{Pattern}' was found in {Folder}. it will use icon : {IconPath}", pattern, folder, iconPath);
+                            }
+                            if (matched) break;
+                        }
+
+                        if (matched && File.Exists(iconPath))
+                        {
+                            _logger.LogInformation("Applying icon {IconPath} to folder {Folder}", iconPath, folder);
+                            ApplyIcon(folder, iconPath);
+                            Task.Delay(10).Wait();
+                            if (diffs.Targets.Contains(folder))
+                            {
+                                var index = diffs.Targets.IndexOf(folder);
+                                diffs.Icons[index] = iconPath;
+                                diffs.Files[index] = patterstaken;
+                            }
+                            else
+                            {
+                            diffs.Targets.Add(folder);
+                            diffs.Icons.Add(iconPath);
+                            diffs.Files.Add(patterstaken);
+                            }
+                        }
+                        else
+                        {
+                            _logger.LogInformation("No matching pattern found for folder {Folder}. Removing icon if exists.", folder);
+                            // Si no coincide ningún patrón, elimina cualquier ícono anterior
+                            RemoveIconConfig(folder);
+                        }
+
+                        _configService.SaveDiff(diffs, ConfigPaths.ConfigDiffs);
+
+                    }
+
+                }
+            }
+            Task.Delay(2000).Wait();
+
+            SHChangeNotify(0x08000000, 0x1000, null, IntPtr.Zero);
+
+            _logger.LogInformation("Icon assignment completed. 😼");
+
+        }
+
+        public void ApplyOneFolder(string folder, ConfigData config)
+        {
+            Debug.WriteLine(folder, "  --   OneFOlder");
+            if (config != null)
+            {
+                ConfigDiff? diffs = _configService.LoadDiff(ConfigPaths.ConfigDiffs);
+
+                ConfigDiff newone = new ConfigDiff();
+                _logger.LogInformation("Assigning icons to desktop folders...");
                 // Obtiene todos los archivos del folder
                 var files = Directory.GetFiles(folder, "*.*", SearchOption.TopDirectoryOnly);
                 var matched = false;
+                var patterstaken = string.Empty;
                 string iconPath = null!;
 
                 // Busca el primer patrón que encaje
@@ -52,6 +201,7 @@ namespace Iconizer.Infrastructure.Services
                         if (files.Select(f => Path.GetFileName(f)).Any(name => name.Contains(pattern, StringComparison.OrdinalIgnoreCase)))
                         {
                             matched = true;
+                            patterstaken = pattern;
                             iconPath = config.Icons[i];
                             _logger.LogDebug("Pattern '{Pattern}' was found in {Folder}. it will use icon : {IconPath}", pattern, folder, iconPath);
                         }
@@ -62,6 +212,29 @@ namespace Iconizer.Infrastructure.Services
                     {
                         _logger.LogInformation("Applying icon {IconPath} to folder {Folder}", iconPath, folder);
                         ApplyIcon(folder, iconPath);
+                        if (diffs == null)
+                        {
+                            newone.Targets.Add(folder);
+                            newone.Icons.Add(iconPath);
+                            newone.Files.Add(patterstaken);
+                            _configService.SaveDiff(newone, ConfigPaths.ConfigDiffs);
+                        }
+                        else
+                        {
+                            if (diffs.Targets.Contains(folder))
+                            {
+                                var index = diffs.Targets.IndexOf(folder);
+                                diffs.Icons[index] = iconPath;
+                                diffs.Files[index] = patterstaken;
+                            }
+                            else
+                            {
+                                diffs.Targets.Add(folder);
+                                diffs.Icons.Add(iconPath);
+                                diffs.Files.Add(patterstaken);
+                            }
+                            _configService.SaveDiff(diffs, ConfigPaths.ConfigDiffs);
+                        }
                     }
                     else
                     {
@@ -70,11 +243,9 @@ namespace Iconizer.Infrastructure.Services
                         RemoveIconConfig(folder);
                     }
                 }
-
             }
-            _logger.LogInformation("Icon assignment completed. 😼");
-
         }
+
 
         private void ApplyIcon(string folderPath, string sourceIconPath)
         {
@@ -161,9 +332,14 @@ namespace Iconizer.Infrastructure.Services
                 _logger.LogWarning(ex, "ApplyIcon: Error System Attr '{FolderPath}'", folderPath);
             }
 
+
             // 6) Notificar al shell
             _logger.LogInformation("Notifying shell about changes in {FolderPath}", folderPath);
-            SHChangeNotify(0x00002000, 0x0005, folderPath, IntPtr.Zero);
+            //Thread.Sleep(50);
+            //SHChangeNotify(0x00002000, 0x0005, folderPath, IntPtr.Zero);
+            SHChangeNotify(0x00001000, 0x0005, folderPath, IntPtr.Zero);
+
+
         }
 
 

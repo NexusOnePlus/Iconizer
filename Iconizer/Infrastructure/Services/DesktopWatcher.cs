@@ -77,7 +77,7 @@ namespace Iconizer.Infrastructure.Services
 
             // Aplica ícono inicial o remueve
             var config = _configService.Load(ConfigPaths.ConfigFilePath);
-            _iconService.AssignIconsToFolders(config!);
+            //_iconService.AssignIconsToFolders(config!);
 
             _pendingUpdate[folder] = false;
             _debounceTokens[folder] = null;
@@ -87,12 +87,35 @@ namespace Iconizer.Infrastructure.Services
                 IncludeSubdirectories = false,
                 NotifyFilter = NotifyFilters.FileName
             };
-            fsw.Created += async (_, _) => await Debounce(folder);
-            fsw.Deleted += async (_, _) => await Debounce(folder);
+            fsw.Created += async (sender, e) =>
+            {
+                string name = Path.GetFileName(e.FullPath);
+                if(IgnoreFile(name)) return;
+                await Debounce(folder);
+            };
+            fsw.Deleted += async (sender, e) => {
+                string name = Path.GetFileName(e.FullPath);
+                if (IgnoreFile(name)) return;
+                await Debounce(folder);
+                };
             fsw.EnableRaisingEvents = true;
 
             _folderWatchers[folder] = fsw;
         }
+
+        private static bool IgnoreFile(string fileName)
+        {
+            if (string.Equals(fileName, "desktop.ini", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            if (fileName.StartsWith("iconizer_", StringComparison.OrdinalIgnoreCase)
+                && fileName.EndsWith(".ico", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            return false;
+        }
+
+
 
         private void RemoveFolderWatcher(string folder)
         {
@@ -125,7 +148,7 @@ namespace Iconizer.Infrastructure.Services
                 try
                 {
                     var config = _configService.Load(ConfigPaths.ConfigFilePath);
-                    _iconService.AssignIconsToFolders(config!);
+                    _iconService.ApplyOneFolder(folder,config!);
                 }
                 finally
                 {

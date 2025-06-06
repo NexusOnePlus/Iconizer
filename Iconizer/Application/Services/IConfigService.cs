@@ -8,10 +8,16 @@ namespace Iconizer.Application.Services
         /// Carga la configuración desde el JSON. Devuelve null o un ConfigData vacío si no existe.
         /// </summary>
         ConfigData? Load(string path);
+            
+        ConfigDiff? LoadDiff(string path);
 
         /// <summary>
         /// Guarda la configuración en disco, serializándola a JSON con indentación.
         /// </summary>
         void Save(ConfigData config, string path);
+
+
+
+        void SaveDiff(ConfigDiff configDiff, string path);
     }
 }
