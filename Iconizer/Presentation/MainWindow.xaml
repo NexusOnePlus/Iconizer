@@ -38,6 +38,8 @@
                         Background="White"
                         Click="LoadIcons_Click"
                         Content="Import Icons" FontSize="15" />
+
+
                 <Button Grid.Column="2" Name="BtButton" Width="70" Height="30" VerticalAlignment="Center"
                         HorizontalAlignment="Right"
                         Background="Red"
@@ -113,7 +115,7 @@
             </Border>
             <Grid Grid.Row="2">
                 <Grid.ColumnDefinitions>
-                    <!--<ColumnDefinition />-->
+                    <ColumnDefinition />
                     <ColumnDefinition />
                     <ColumnDefinition />
                     <ColumnDefinition />
@@ -123,19 +125,26 @@
                         Content="Load"
                         Background="#3c434b"    
                         FontSize="15" />-->
-                <Button Grid.Column="0"  Name="ResetConfigButton" VerticalAlignment="Center"
-                        HorizontalAlignment="Left"
+                <CheckBox Grid.Column="0" Name="AutoStart"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Center"
+                        Foreground="White"
+                        ClickMode="Press"
+                        Click="AutoStart_Click"
+                        Content="AutoStart" FontSize="15" />
+                <Button Grid.Column="1"  Name="ResetConfigButton" VerticalAlignment="Center"
+                        HorizontalAlignment="Center"
                         Content="Reset"
                         Background="#3c434b"   
                         Click="ResetConfigButton_OnClick"
                         FontSize="15" />
                 <!--Click="BtButton_OnClick"-->
-                <Button Grid.Column="1" Name="SaveButton" HorizontalAlignment="Center"
+                <Button Grid.Column="2" Name="SaveButton" HorizontalAlignment="Center"
                         VerticalAlignment="Center"
                         Background="#3b7dd1"
                         Click="SaveButton_OnClick"
                         Content="Save" />
-                <Button Grid.Column="2" Name="AddButton" HorizontalAlignment="Right"
+                <Button Grid.Column="3" Name="AddButton" HorizontalAlignment="Center"
                         VerticalAlignment="Center"
                         Background="#3c434b"
                         Click="AddButton_OnClick"

@@ -22,6 +22,10 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Windows;
 using Microsoft.Extensions.Logging;
+using System.Windows.Forms;
+using IWshRuntimeLibrary;
+using File = System.IO.File;
+using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 
 namespace Iconizer.Presentation
 {
@@ -36,7 +40,7 @@ namespace Iconizer.Presentation
         public MainWindow(
             IConfigService configService,
             IIconAssignmentService iconService,
-            IExtensionValidator validator , ILogger<MainWindow> logger)
+            IExtensionValidator validator, ILogger<MainWindow> logger)
         {
             InitializeComponent();
 
@@ -138,7 +142,8 @@ namespace Iconizer.Presentation
                     if (!filename.Contains(".ico"))
                     {
                         InputsPanel.Children.Add(CreateControl("", ConvertToIco(filename)));
-                    } else
+                    }
+                    else
                     {
                         InputsPanel.Children.Add(CreateControl("", filename));
                     }
@@ -151,7 +156,7 @@ namespace Iconizer.Presentation
             _logger.LogInformation("Converting image to ICO: {ImagePath}", imagePath);
             if (!File.Exists(imagePath))
             {
-                MessageBox.Show("File not found: " + imagePath, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                System.Windows.MessageBox.Show("File not found: " + imagePath, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 return string.Empty;
             }
             if (!Directory.Exists(ConfigPaths.IconsFolder))
@@ -203,5 +208,58 @@ namespace Iconizer.Presentation
             _logger.LogInformation("MainWindow closed, hiding instead of closing.");
             Hide();
         }
+
+        private void AutoStart_Click(object sender, RoutedEventArgs e)
+        {
+            string folderPath = Environment.GetFolderPath(Environment.SpecialFolder.Startup);
+            string filePath = Path.Combine(folderPath, "Iconizer.lnk");
+            string exePath = Process.GetCurrentProcess().MainModule!.FileName;
+            if (AutoStart.IsChecked == true)
+            {
+                if (!File.Exists(filePath))
+                {
+                    try
+                    {
+                        var shell = new WshShell();
+
+                        IWshShortcut link = (IWshShortcut)shell.CreateShortcut(filePath);
+                        link.TargetPath = exePath;
+                        link.WorkingDirectory = Path.GetDirectoryName(exePath)!;
+                        link.Description = "Iconizer - Windows Startup  ";
+                        link.WindowStyle = 7;
+                        link.Save();
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Windows.MessageBox.Show(
+                            $"Error writting shotcut access:\n{ex.Message}",
+                            "Iconizer",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Error);
+                        AutoStart.IsChecked = false;
+                    }
+                }
+            }
+            else
+            {
+                if (File.Exists(filePath))
+                {
+                    try
+                    {
+                        File.Delete(filePath);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Windows.MessageBox.Show(
+                            $"Error deleting autostart:\n{ex.Message}",
+                            "Iconizer",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Error);
+                        AutoStart.IsChecked = true;
+                    }
+                }
+            }
+        }
     }
+
 }
