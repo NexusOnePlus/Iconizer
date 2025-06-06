@@ -5,22 +5,60 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:Iconizer.Presentation.View.UserControls"
              mc:Ignorable="d"
-             d:DesignHeight="50" d:DesignWidth="500">
+             d:DesignHeight="60" d:DesignWidth="500">
     <Border CornerRadius="12" Background="#27262b" Margin="0,10">
         <Grid>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="40*"/>
+                <ColumnDefinition Width="20*"/>
                 <ColumnDefinition Width="10*"/>
                 <ColumnDefinition Width="40*"/>
+                <ColumnDefinition Width="20*"/>
             </Grid.ColumnDefinitions>
-            <TextBox
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Image
+                Grid.Column="0"
+                Grid.RowSpan="2"
+                Name="IconPreview"
+                Margin="5"
+                Stretch="Uniform"
+                VerticalAlignment="Center"
+                HorizontalAlignment="Center"
+                Width="64"
+                Height="64"
+                Source="" />
+            <TextBlock
+                Grid.Row="1"
+                Grid.Column="1"
+                VerticalAlignment="Center"
+                HorizontalAlignment="Center"
+                Name="IconLabel"
+                FontSize="12"
+                Foreground="#ffffff"
+                Text="Icon:" />
+            <TextBlock
+                Grid.Row="0"
+                Grid.Column="1"
+                VerticalAlignment="Center"
+                HorizontalAlignment="Center"
+                Name="Label"
+                FontSize="12"
+                Foreground="#ffffff"
+                Text="Pattern:" />
+                    <TextBox
+                Grid.Row="0"
+                Grid.Column="2"
                 Name="MyTextBox"
                 VerticalAlignment="Center" Margin="20,10" Height="30"
                 FontSize="14"
                 BorderThickness="0,0,1,0"
                 FontWeight="Light" />
-            <Button Grid.Column="1"
-                    Name="DeleteButton"
+            <Button Grid.Column="3"
+                    Grid.RowSpan="2"
+                    Grid.Row="0"
+                    Name="DeleteButton" 
                     Background="#c55456"
                     Content="Delete"
                     VerticalAlignment="Center"
@@ -28,11 +66,14 @@
                     HorizontalAlignment="Center" />
             <TextBox
                 Grid.Column="2"
+                Grid.Row="2"
                 Name="IconInput"
                 VerticalAlignment="Center" Margin="20,10" Height="30"
                 FontSize="14"
                 BorderThickness="0,0,1,0"
-                FontWeight="Light" />
+                FontWeight="Light" 
+                TextChanged="IconInput_TextChanged"
+                />
         </Grid>
     </Border>
 

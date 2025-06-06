@@ -68,7 +68,7 @@
                                 <RowDefinition Height="40*" />
                                 <RowDefinition Height="60*" />
                             </Grid.RowDefinitions>
-                            <TextBlock Text="Extensions" VerticalAlignment="Center"
+                            <TextBlock Text="Patterns" VerticalAlignment="Center"
                                        HorizontalAlignment="Left"
                                        FontSize="20"
                                        FontWeight="SemiBold"

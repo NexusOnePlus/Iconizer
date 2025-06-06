@@ -168,7 +168,7 @@ namespace Iconizer.Infrastructure.Services
 
                 }
             }
-            Task.Delay(2000).Wait();
+            Task.Delay(5000).Wait();
 
             SHChangeNotify(0x08000000, 0x1000, null, IntPtr.Zero);
 
