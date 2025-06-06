@@ -50,7 +50,7 @@ jobs:
     - name: Create Velopack Release
       run: |
           vpk pack \
-            -u Iconizer.App \
+            -u Iconizer \
             -v ${{ github.event.inputs.version }} \
             -p publish \
             -e Iconizer.exe
@@ -64,8 +64,8 @@ jobs:
         body: |
             ${{ github.event.inputs.release_notes }}
         files: |
-            Releases/Iconizer.App-win-Portable.zip
-            Releases/Iconizer.App-win-Setup.exe
+            Releases/Iconizer-win-Portable.zip
+            Releases/Iconizer-win-Setup.exe
       env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
