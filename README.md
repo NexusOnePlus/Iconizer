@@ -5,6 +5,10 @@
 Iconizer is a modern WPF application that automatically adds programming language and application icons to Windows folders, enhancing folder navigation and visual organization.
 
 
+![image](https://github.com/user-attachments/assets/36f7b841-b38a-47a4-bf7f-d7ae5f0cb310)
+
+
+
 ## Overview
 
 Iconizer simplifies the process of customizing folder icons on Windows systems. Instead of manually changing icons one by one, Iconizer automatically identifies project folders and applies appropriate programming language or application icons based on folder content analysis. This makes it easy to visually distinguish between different project types (Python, Rust, JavaScript, etc.) or application folders.
