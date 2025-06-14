@@ -31,6 +31,7 @@ namespace Infrastructure.Services
             _trayIcon.ToolTipText = "Iconizer Running";
             _trayIcon.ContextMenu = BuildMenu();
             _trayIcon.TrayLeftMouseDown += (_, _) => App.ShowWindow();
+            _trayIcon.TrayRightMouseUp += (_, _) => _trayIcon.ContextMenu.IsOpen = true;
 
             await Task.CompletedTask;
         }
@@ -39,6 +40,7 @@ namespace Infrastructure.Services
         {
             _logger.LogInformation("Building Tray Icon Context Menu");
             var menu = new ContextMenu();
+            menu.StaysOpen = false;
             var open = new MenuItem { Header = "Open" };
             open.Click += (_, _) => App.ShowWindow();
             menu.Items.Add(open);
@@ -46,6 +48,10 @@ namespace Infrastructure.Services
             var exit = new MenuItem { Header = "Exit" };
             exit.Click += (_, _) => Application.Current.Shutdown();
             menu.Items.Add(exit);
+            menu.Items.Add(new Separator());
+            var cancel = new MenuItem { Header = "Cancel" };
+            cancel.Click += (_, _) => menu.IsOpen = false;
+            menu.Items.Add(cancel);
             return menu;
         }
 
