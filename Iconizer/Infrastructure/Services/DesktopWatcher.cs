@@ -13,6 +13,7 @@ namespace Iconizer.Infrastructure.Services
         private readonly Dictionary<string, FileSystemWatcher> _folderWatchers;
         private readonly Dictionary<string, bool> _pendingUpdate;
         private readonly Dictionary<string, CancellationTokenSource?> _debounceTokens;
+        private const int TimeDebounceDelay = 10; // seconds
 
         public DesktopWatcher(
             IConfigService configService,
@@ -30,12 +31,12 @@ namespace Iconizer.Infrastructure.Services
                 IncludeSubdirectories = false,
                 NotifyFilter = NotifyFilters.DirectoryName
             };
-            _rootWatcher.Created += (_, e) => AddFolderWatcherAsync(e.FullPath);
+            _rootWatcher.Created +=  (_,  e) => AddFolderWatcher(e.FullPath);
             _rootWatcher.Deleted += (_, e) => RemoveFolderWatcher(e.FullPath);
             _rootWatcher.Renamed += (_, e) =>
             {
                 RemoveFolderWatcher(e.OldFullPath);
-                AddFolderWatcherAsync(e.FullPath);
+                AddFolderWatcher(e.FullPath);
             };
         }
 
@@ -56,7 +57,7 @@ namespace Iconizer.Infrastructure.Services
         public async Task StartAsync()
         {
             foreach (var folder in Directory.GetDirectories(_desktopPath))
-                AddFolderWatcherAsync(folder);
+                AddFolderWatcher(folder);
             _rootWatcher.EnableRaisingEvents = true;
             await Task.CompletedTask;
         }
@@ -71,12 +72,12 @@ namespace Iconizer.Infrastructure.Services
             await StartAsync();
         }
 
-        private void AddFolderWatcherAsync(string folder)
+        private void  AddFolderWatcher(string folder)
         {
             if (!Directory.Exists(folder) || _folderWatchers.ContainsKey(folder)) return;
 
             // Aplica ícono inicial o remueve
-            var config = _configService.Load(ConfigPaths.ConfigFilePath);
+            //var config =  _configService.Load(ConfigPaths.ConfigFilePath);
             //_iconService.AssignIconsToFolders(config!);
 
             _pendingUpdate[folder] = false;
@@ -87,22 +88,20 @@ namespace Iconizer.Infrastructure.Services
                 IncludeSubdirectories = false,
                 NotifyFilter = NotifyFilters.FileName
             };
-            fsw.Created += async (sender, e) =>
-            {
-                string name = Path.GetFileName(e.FullPath);
-                if(IgnoreFile(name)) return;
-                await Debounce(folder);
-            };
-            fsw.Deleted += async (sender, e) => {
-                string name = Path.GetFileName(e.FullPath);
-                if (IgnoreFile(name)) return;
-                await Debounce(folder);
-                };
+            
+            fsw.Created += async (_, e) => await HandleFileChangeAsync(folder, Path.GetFileName(e.FullPath));
+            fsw.Deleted += async (_, e) => await HandleFileChangeAsync(folder, Path.GetFileName(e.FullPath));
             fsw.EnableRaisingEvents = true;
 
             _folderWatchers[folder] = fsw;
         }
-
+        
+        private async Task HandleFileChangeAsync(string folder, string fileName)
+        {
+            if (IgnoreFile(fileName)) return;
+            await Debounce(folder);
+        }
+        
         private static bool IgnoreFile(string fileName)
         {
             if (string.Equals(fileName, "desktop.ini", StringComparison.OrdinalIgnoreCase))
@@ -142,13 +141,13 @@ namespace Iconizer.Infrastructure.Services
 
             try
             {
-                
-                await Task.Delay(TimeSpan.FromSeconds(10), cts.Token);
+
+                await Task.Delay(TimeSpan.FromSeconds(TimeDebounceDelay), cts.Token).ConfigureAwait(false);
                 DisableAllWatchers();
                 try
                 {
                     var config = _configService.Load(ConfigPaths.ConfigFilePath);
-                    _iconService.ApplyOneFolder(folder,config!);
+                    _iconService.ApplyOneFolder(folder, config!);
                 }
                 finally
                 {
@@ -159,6 +158,10 @@ namespace Iconizer.Infrastructure.Services
             {
                 // marcado para nueva corrida
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error during debounce for folder {ex.Message}");
+            }
             if (_pendingUpdate[folder])
                 await Debounce(folder);
         }
@@ -168,6 +171,8 @@ namespace Iconizer.Infrastructure.Services
             _rootWatcher.Dispose();
             foreach (var w in _folderWatchers.Values) w.Dispose();
             foreach (var c in _debounceTokens.Values) c?.Dispose();
+            _folderWatchers.Clear();
+            _debounceTokens.Clear();
         }
     }
 }
