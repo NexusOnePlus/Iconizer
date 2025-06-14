@@ -24,9 +24,38 @@ namespace Iconizer.Infrastructure.Services
             _logger = logger;
             _configService = configDiff;
         }
+
+        [DllImport("Shell32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        public static extern uint SHGetSetFolderCustomSettings(ref SHFOLDERCUSTOMSETTINGS pfcs, string pszPath, uint dwReadWrite);
+
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
+        public struct SHFOLDERCUSTOMSETTINGS
+        {
+            public uint dwSize;
+            public uint dwMask;
+            public IntPtr pvid;
+            public string pszWebViewTemplate;
+            public uint cchWebViewTemplate;
+            public string pszWebViewTemplateVersion;
+            public string pszInfoTip;
+            public uint cchInfoTip;
+            public IntPtr pclsid;
+            public uint dwFlags;
+            public string pszIconFile;
+            public uint cchIconFile;
+            public int iIconIndex;
+            public string pszLogo;
+            public uint cchLogo;
+        }
+
+        private const uint FCSM_ICONFILE = 0x10;
+        private const uint FCS_FORCEWRITE = 0x00000002;
+
         [DllImport("shell32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         private static extern void SHChangeNotify(
-            int wEventId, int uFlags, string dwItem1, IntPtr dwItem2);
+           int wEventId, int uFlags, string dwItem1, IntPtr dwItem2);
+
 
         public IEnumerable<string> GetDesktopFolders()
         {
@@ -73,7 +102,7 @@ namespace Iconizer.Infrastructure.Services
                         if (matched && File.Exists(iconPath))
                         {
                             _logger.LogInformation("Applying icon {IconPath} to folder {Folder}", iconPath, folder);
-                            ApplyIcon(folder, iconPath);
+                            OnlyIcon(folder, iconPath);
                             newone.Targets.Add(folder);
                             newone.Icons.Add(iconPath);
                             newone.Files.Add(config.Files[config.Icons.IndexOf(iconPath)]);
@@ -140,7 +169,7 @@ namespace Iconizer.Infrastructure.Services
                         if (matched && File.Exists(iconPath))
                         {
                             _logger.LogInformation("Applying icon {IconPath} to folder {Folder}", iconPath, folder);
-                            ApplyIcon(folder, iconPath);
+                            OnlyIcon(folder, iconPath);
                             Task.Delay(10).Wait();
                             if (diffs.Targets.Contains(folder))
                             {
@@ -168,9 +197,9 @@ namespace Iconizer.Infrastructure.Services
 
                 }
             }
-            Task.Delay(1000).Wait();
+            //Task.Delay(1000).Wait();
 
-            SHChangeNotify(0x08000000, 0x1000, null, IntPtr.Zero);
+            //SHChangeNotify(0x08000000, 0x1000, null, IntPtr.Zero);
 
             _logger.LogInformation("Icon assignment completed. 😼");
 
@@ -249,7 +278,7 @@ namespace Iconizer.Infrastructure.Services
                     RemoveIconConfig(folder);
                 }
 
-                SHChangeNotify(0x00002000, 0x0005, folder, IntPtr.Zero);
+                //SHChangeNotify(0x00002000, 0x0005, folder, IntPtr.Zero);
             }
         }
 
@@ -259,6 +288,8 @@ namespace Iconizer.Infrastructure.Services
             string uniqueName = $"iconizer_{DateTime.Now:yyyyMMddHHmmss}.ico";
             var icoDest = Path.Combine(folderPath, uniqueName);
             var iniDest = Path.Combine(folderPath, "desktop.ini");
+            Debug.WriteLine("OnlyIcon: " + folderPath + " " + sourceIconPath);
+
 
             var oldIcons = Directory.GetFiles(folderPath, "iconizer_*.ico", SearchOption.TopDirectoryOnly);
             foreach (var oldIconPath in oldIcons)
@@ -275,40 +306,8 @@ namespace Iconizer.Infrastructure.Services
                 }
             }
 
-            try
-            {
-                var folderAttr = File.GetAttributes(folderPath);
-                var limpia = folderAttr & ~(FileAttributes.ReadOnly | FileAttributes.System);
-                File.SetAttributes(folderPath, limpia);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "ApplyIcon: Couldn't remove attributes '{folderPath}'", folderPath);
-            }
-
-            _logger.LogDebug("Copying icon from {SourceIconPath} to {IcoDest}", sourceIconPath, icoDest);
             SafeCopy(sourceIconPath, icoDest, overwrite: true, logger: _logger);
-
-
-            _logger.LogDebug("Preparing desktop.ini at {IniDest}", iniDest);
-            var iniContent = $"[.ShellClassInfo]\r\nIconResource={uniqueName},0\r\n";
-            SafeDelete(iniDest, maxRetries: 5, delayMs: 200, logger: _logger);
-
-            try
-            {
-                SafeWriteAllText(
-                    iniDest,
-                    iniContent,
-                    Encoding.Unicode,
-                    maxRetries: 5,
-                    delayMs: 200,
-                    logger: _logger
-                );
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "ApplyIcon: Coudn't write '{IniDest}'.", iniDest);
-            }
+            File.SetAttributes(icoDest, FileAttributes.Hidden | FileAttributes.System);
 
             try
             {
@@ -317,15 +316,6 @@ namespace Iconizer.Infrastructure.Services
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "ApplyIcon: Error Set Attributes'{IcoDest}' .", icoDest);
-            }
-
-            try
-            {
-                File.SetAttributes(iniDest, FileAttributes.Hidden | FileAttributes.System);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "ApplyIcon: Error Apply Attributes Hidden System '{IniDest}'", iniDest);
             }
 
             try
@@ -339,108 +329,44 @@ namespace Iconizer.Infrastructure.Services
             }
 
 
-            // 6) Notificar al shell
-            _logger.LogInformation("Notifying shell about changes in {FolderPath}", folderPath);
-            //Thread.Sleep(50);
+            var fcs = new SHFOLDERCUSTOMSETTINGS
+            {
+                dwMask = FCSM_ICONFILE,
+                pszIconFile = icoDest,
+                iIconIndex = 0,
+            };
+
+            try
+            {
+                uint hr = SHGetSetFolderCustomSettings(ref fcs, folderPath, FCS_FORCEWRITE);
+                int win32 = Marshal.GetLastWin32Error();
+
+                if (hr != 0 || win32 != 0)
+                {
+                    Debug.WriteLine(
+                        "SHGetSetFolderCustomSettings falló: HRESULT=0x{Hr:X8}, Win32Error={Win32}" +
+                        hr + win32);
+                }
+                else
+                {
+                    Debug.WriteLine("Applied");
+                }
+                _logger.LogInformation("Icon applied via Shell API to {FolderPath}", folderPath);
+
+            }
+            catch (Exception er)
+            {
+                Debug.WriteLine("Error applying: " + er.Message);
+            }
+
+
+
             SHChangeNotify(0x00001000, 0x0005, folderPath, IntPtr.Zero);
             SHChangeNotify(0x00002000, 0x0005, folderPath, IntPtr.Zero);
         }
 
 
-        private void ApplyIcon(string folderPath, string sourceIconPath)
-        {
-            string uniqueName = $"iconizer_{DateTime.Now:yyyyMMddHHmmss}.ico";
-            var icoDest = Path.Combine(folderPath, uniqueName);
-            var iniDest = Path.Combine(folderPath, "desktop.ini");
 
-            var oldIcons = Directory.GetFiles(folderPath, "iconizer_*.ico", SearchOption.TopDirectoryOnly);
-            foreach (var oldIconPath in oldIcons)
-            {
-                try
-                {
-                    File.SetAttributes(oldIconPath, FileAttributes.Normal);
-                    File.Delete(oldIconPath);
-                    _logger.LogDebug("Deleted old icon file: {OldIconPath}", oldIconPath);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to delete old icon: {OldIconPath}", oldIconPath);
-                }
-            }
-
-            try
-            {
-                var folderAttr = File.GetAttributes(folderPath);
-                var limpia = folderAttr & ~(FileAttributes.ReadOnly | FileAttributes.System);
-                File.SetAttributes(folderPath, limpia);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "ApplyIcon: Couldn't remove attributes '{folderPath}'", folderPath);
-            }
-
-            _logger.LogDebug("Copying icon from {SourceIconPath} to {IcoDest}", sourceIconPath, icoDest);
-            SafeCopy(sourceIconPath, icoDest, overwrite: true, logger: _logger);
-
-
-            _logger.LogDebug("Preparing desktop.ini at {IniDest}", iniDest);
-            var iniContent = $"[.ShellClassInfo]\r\nIconResource={uniqueName},0\r\n";
-            SafeDelete(iniDest, maxRetries: 5, delayMs: 200, logger: _logger);
-
-            try
-            {
-                SafeWriteAllText(
-                    iniDest,
-                    iniContent,
-                    Encoding.Unicode,
-                    maxRetries: 5,
-                    delayMs: 200,
-                    logger: _logger
-                );
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "ApplyIcon: Coudn't write '{IniDest}'.", iniDest);
-            }
-
-            try
-            {
-                File.SetAttributes(icoDest, FileAttributes.Hidden | FileAttributes.System);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "ApplyIcon: Error Set Attributes'{IcoDest}' .", icoDest);
-            }
-
-            try
-            {
-                File.SetAttributes(iniDest, FileAttributes.Hidden | FileAttributes.System);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "ApplyIcon: Error Apply Attributes Hidden System '{IniDest}'", iniDest);
-            }
-
-            try
-            {
-                var folderAttr2 = File.GetAttributes(folderPath);
-                File.SetAttributes(folderPath, folderAttr2 | FileAttributes.System);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "ApplyIcon: Error System Attr '{FolderPath}'", folderPath);
-            }
-
-
-            // 6) Notificar al shell
-            _logger.LogInformation("Notifying shell about changes in {FolderPath}", folderPath);
-            //Thread.Sleep(50);
-            SHChangeNotify(0x00001000, 0x0005, folderPath, IntPtr.Zero);
-            SHChangeNotify(0x00002000, 0x0005, folderPath, IntPtr.Zero);
-            SHChangeNotify(0x08000000, 0x0005, null, IntPtr.Zero);
-
-
-        }
 
 
         /// <summary>
