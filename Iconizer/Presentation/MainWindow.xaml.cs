@@ -47,7 +47,7 @@ namespace Iconizer.Presentation
             _configService = configService;
             _iconService = iconService;
             _validator = validator;
-
+            setStart();
             LoadConfig();
         }
 
@@ -208,72 +208,86 @@ namespace Iconizer.Presentation
             Hide();
         }
 
-        private void AutoStart_Click(object sender, RoutedEventArgs e)
+        private void setStart()
         {
             string folderPath = Environment.GetFolderPath(Environment.SpecialFolder.Startup);
             string filePath = Path.Combine(folderPath, "Iconizer.lnk");
-            string exePath = Process.GetCurrentProcess().MainModule!.FileName;
-            if (AutoStart.IsChecked == true)
+            if (!File.Exists(filePath))
             {
-                if (!File.Exists(filePath))
-                {
-                    try
-                    {
-                        Type? wshType = Type.GetTypeFromProgID("WScript.Shell");
-                        if (wshType is null)
-                        {
-                            System.Windows.MessageBox.Show(
-                                "Cannot access WScript.Shell. Are you on Windows?.",
-                                "Iconizer",
-                                MessageBoxButton.OK,
-                                MessageBoxImage.Warning);
-                            AutoStart.IsChecked = false;
-                            return;
-                        }
-                        dynamic wshShell = Activator.CreateInstance(wshType)!;
-
-
-                        dynamic link = wshShell.CreateShortcut(filePath);
-
-
-
-                        link.TargetPath = exePath;
-                        link.WorkingDirectory = Path.GetDirectoryName(exePath)!;
-                        link.Description = "Iconizer - Windows Startup  ";
-                        link.WindowStyle = 7;
-                        link.Save();
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Windows.MessageBox.Show(
-                            $"Error writting shotcut access:\n{ex.Message}",
-                            "Iconizer",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Error);
-                        AutoStart.IsChecked = false;
-                    }
-                }
+                AutoStart.IsChecked = false;
             }
             else
             {
-                if (File.Exists(filePath))
-                {
-                    try
-                    {
-                        File.Delete(filePath);
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Windows.MessageBox.Show(
-                            $"Error deleting autostart:\n{ex.Message}",
-                            "Iconizer",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Error);
-                        AutoStart.IsChecked = true;
-                    }
-                }
+                AutoStart.IsChecked = true;
             }
         }
+
+                private void AutoStart_Click(object sender, RoutedEventArgs e)
+                {
+                    string folderPath = Environment.GetFolderPath(Environment.SpecialFolder.Startup);
+                    string filePath = Path.Combine(folderPath, "Iconizer.lnk");
+                    string exePath = Process.GetCurrentProcess().MainModule!.FileName;
+                    if (AutoStart.IsChecked == true)
+                    {
+                        if (!File.Exists(filePath))
+                        {
+                            try
+                            {
+                                Type? wshType = Type.GetTypeFromProgID("WScript.Shell");
+                                if (wshType is null)
+                                {
+                                    System.Windows.MessageBox.Show(
+                                        "Cannot access WScript.Shell. Are you on Windows?.",
+                                        "Iconizer",
+                                        MessageBoxButton.OK,
+                                        MessageBoxImage.Warning);
+                                    AutoStart.IsChecked = false;
+                                    return;
+                                }
+                                dynamic wshShell = Activator.CreateInstance(wshType)!;
+
+
+                                dynamic link = wshShell.CreateShortcut(filePath);
+
+
+
+                                link.TargetPath = exePath;
+                                link.WorkingDirectory = Path.GetDirectoryName(exePath)!;
+                                link.Description = "Iconizer - Windows Startup  ";
+                                link.WindowStyle = 7;
+                                link.Save();
+                            }
+                            catch (Exception ex)
+                            {
+                                System.Windows.MessageBox.Show(
+                                    $"Error writting shotcut access:\n{ex.Message}",
+                                    "Iconizer",
+                                    MessageBoxButton.OK,
+                                    MessageBoxImage.Error);
+                                AutoStart.IsChecked = false;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (File.Exists(filePath))
+                        {
+                            try
+                            {
+                                File.Delete(filePath);
+                            }
+                            catch (Exception ex)
+                            {
+                                System.Windows.MessageBox.Show(
+                                    $"Error deleting autostart:\n{ex.Message}",
+                                    "Iconizer",
+                                    MessageBoxButton.OK,
+                                    MessageBoxImage.Error);
+                                AutoStart.IsChecked = true;
+                            }
+                        }
+                    }
+                }
     }
 
 }

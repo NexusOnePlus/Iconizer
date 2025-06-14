@@ -49,7 +49,7 @@ namespace Iconizer
             MainInstance = window;
             MainInstance.Closing += MainIsClosing;
             MainInstance.Closed += (_, _) => MainInstance = null;
-            MainInstance.Show();
+            //MainInstance.Show();
         }
 
         protected override void OnExit(ExitEventArgs e)
