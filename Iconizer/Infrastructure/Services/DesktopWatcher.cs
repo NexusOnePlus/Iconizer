@@ -14,7 +14,7 @@ namespace Iconizer.Infrastructure.Services
         private readonly Dictionary<string, FileSystemWatcher> _folderWatchers;
         private readonly Dictionary<string, bool> _pendingUpdate;
         private readonly Dictionary<string, CancellationTokenSource?> _debounceTokens;
-        private const int TimeDebounceDelay = 2; // seconds
+        private const int TimeDebounceDelay = 1; // seconds
 
         public DesktopWatcher(
             IConfigService configService,
@@ -92,7 +92,7 @@ namespace Iconizer.Infrastructure.Services
             
             fsw.Created += async (_, e) => await HandleFileChangeAsync(folder, Path.GetFileName(e.FullPath));
             fsw.Deleted += async (_, e) => await HandleFileChangeAsync(folder, Path.GetFileName(e.FullPath));
-            fsw.Renamed += async (s, e) => await HandleFileChangeAsync(folder, Path.GetFileName(e.FullPath))
+            fsw.Renamed += async (s, e) => await HandleFileChangeAsync(folder, Path.GetFileName(e.FullPath));
             fsw.EnableRaisingEvents = true;
 
             _folderWatchers[folder] = fsw;
@@ -108,6 +108,9 @@ namespace Iconizer.Infrastructure.Services
         {
             if (string.Equals(fileName, "desktop.ini", StringComparison.OrdinalIgnoreCase))
                 return true;
+            if (string.Equals(fileName, "node_modules", StringComparison.OrdinalIgnoreCase))
+                return true;
+
 
             if (fileName.StartsWith("iconizer_", StringComparison.OrdinalIgnoreCase)
                 && fileName.EndsWith(".ico", StringComparison.OrdinalIgnoreCase))

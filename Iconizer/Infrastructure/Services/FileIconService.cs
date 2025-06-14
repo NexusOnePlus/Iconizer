@@ -197,60 +197,153 @@ namespace Iconizer.Infrastructure.Services
                 string iconPath = null!;
 
                 // Busca el primer patrón que encaje
-                    for (var i = 0; i < config.Files.Count; i++)
+                for (var i = 0; i < config.Files.Count; i++)
+                {
+                    _logger.LogDebug("Processing folder: {Folder}", folder);
+                    var pattern = config.Files[i];
+                    if (files.Select(f => Path.GetFileName(f)).Any(name => name.Contains(pattern, StringComparison.OrdinalIgnoreCase)))
                     {
-                        _logger.LogDebug("Processing folder: {Folder}", folder);
-                        var pattern = config.Files[i];
-                        if (files.Select(f => Path.GetFileName(f)).Any(name => name.Contains(pattern, StringComparison.OrdinalIgnoreCase)))
-                        {
-                            matched = true;
-                            patterstaken = pattern;
-                            iconPath = config.Icons[i];
-                            _logger.LogDebug("Pattern '{Pattern}' was found in {Folder}. it will use icon : {IconPath}", pattern, folder, iconPath);
-                        }
-                        if (matched) break;
+                        matched = true;
+                        patterstaken = pattern;
+                        iconPath = config.Icons[i];
+                        _logger.LogDebug("Pattern '{Pattern}' was found in {Folder}. it will use icon : {IconPath}", pattern, folder, iconPath);
                     }
+                    if (matched) break;
+                }
 
-                    if (matched && File.Exists(iconPath))
+                if (matched && File.Exists(iconPath))
+                {
+                    _logger.LogInformation("Applying icon {IconPath} to folder {Folder}", iconPath, folder);
+                    Debug.WriteLine("Applying icon to folder ", iconPath.ToString(), folder);
+
+
+                    OnlyIcon(folder, iconPath);
+                    if (diffs == null)
                     {
-                        _logger.LogInformation("Applying icon {IconPath} to folder {Folder}", iconPath, folder);
-                        Debug.WriteLine("Applying icon to folder ", iconPath.ToString(), folder);
-
-
-                        ApplyIcon(folder, iconPath);
-                        if (diffs == null)
-                        {
-                            newone.Targets.Add(folder);
-                            newone.Icons.Add(iconPath);
-                            newone.Files.Add(patterstaken);
-                            _configService.SaveDiff(newone, ConfigPaths.ConfigDiffs);
-                        }
-                        else
-                        {
-                            if (diffs.Targets.Contains(folder))
-                            {
-                                var index = diffs.Targets.IndexOf(folder);
-                                diffs.Icons[index] = iconPath;
-                                diffs.Files[index] = patterstaken;
-                            }
-                            else
-                            {
-                                diffs.Targets.Add(folder);
-                                diffs.Icons.Add(iconPath);
-                                diffs.Files.Add(patterstaken);
-                            }
-                            _configService.SaveDiff(diffs, ConfigPaths.ConfigDiffs);
-                        }
+                        newone.Targets.Add(folder);
+                        newone.Icons.Add(iconPath);
+                        newone.Files.Add(patterstaken);
+                        _configService.SaveDiff(newone, ConfigPaths.ConfigDiffs);
                     }
                     else
                     {
-                        _logger.LogInformation("No matching pattern found for folder {Folder}. Removing icon if exists.", folder);
-                        // Si no coincide ningún patrón, elimina cualquier ícono anterior
-                        RemoveIconConfig(folder);
+                        if (diffs.Targets.Contains(folder))
+                        {
+                            var index = diffs.Targets.IndexOf(folder);
+                            diffs.Icons[index] = iconPath;
+                            diffs.Files[index] = patterstaken;
+                        }
+                        else
+                        {
+                            diffs.Targets.Add(folder);
+                            diffs.Icons.Add(iconPath);
+                            diffs.Files.Add(patterstaken);
+                        }
+                        _configService.SaveDiff(diffs, ConfigPaths.ConfigDiffs);
                     }
+                }
+                else
+                {
+                    _logger.LogInformation("No matching pattern found for folder {Folder}. Removing icon if exists.", folder);
+                    // Si no coincide ningún patrón, elimina cualquier ícono anterior
+                    RemoveIconConfig(folder);
+                }
 
                 SHChangeNotify(0x00002000, 0x0005, folder, IntPtr.Zero);
             }
+        }
+
+
+        private void OnlyIcon(string folderPath, string sourceIconPath)
+        {
+            string uniqueName = $"iconizer_{DateTime.Now:yyyyMMddHHmmss}.ico";
+            var icoDest = Path.Combine(folderPath, uniqueName);
+            var iniDest = Path.Combine(folderPath, "desktop.ini");
+
+            var oldIcons = Directory.GetFiles(folderPath, "iconizer_*.ico", SearchOption.TopDirectoryOnly);
+            foreach (var oldIconPath in oldIcons)
+            {
+                try
+                {
+                    File.SetAttributes(oldIconPath, FileAttributes.Normal);
+                    File.Delete(oldIconPath);
+                    _logger.LogDebug("Deleted old icon file: {OldIconPath}", oldIconPath);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to delete old icon: {OldIconPath}", oldIconPath);
+                }
+            }
+
+            try
+            {
+                var folderAttr = File.GetAttributes(folderPath);
+                var limpia = folderAttr & ~(FileAttributes.ReadOnly | FileAttributes.System);
+                File.SetAttributes(folderPath, limpia);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "ApplyIcon: Couldn't remove attributes '{folderPath}'", folderPath);
+            }
+
+            _logger.LogDebug("Copying icon from {SourceIconPath} to {IcoDest}", sourceIconPath, icoDest);
+            SafeCopy(sourceIconPath, icoDest, overwrite: true, logger: _logger);
+
+
+            _logger.LogDebug("Preparing desktop.ini at {IniDest}", iniDest);
+            var iniContent = $"[.ShellClassInfo]\r\nIconResource={uniqueName},0\r\n";
+            SafeDelete(iniDest, maxRetries: 5, delayMs: 200, logger: _logger);
+
+            try
+            {
+                SafeWriteAllText(
+                    iniDest,
+                    iniContent,
+                    Encoding.Unicode,
+                    maxRetries: 5,
+                    delayMs: 200,
+                    logger: _logger
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "ApplyIcon: Coudn't write '{IniDest}'.", iniDest);
+            }
+
+            try
+            {
+                File.SetAttributes(icoDest, FileAttributes.Hidden | FileAttributes.System);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "ApplyIcon: Error Set Attributes'{IcoDest}' .", icoDest);
+            }
+
+            try
+            {
+                File.SetAttributes(iniDest, FileAttributes.Hidden | FileAttributes.System);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "ApplyIcon: Error Apply Attributes Hidden System '{IniDest}'", iniDest);
+            }
+
+            try
+            {
+                var folderAttr2 = File.GetAttributes(folderPath);
+                File.SetAttributes(folderPath, folderAttr2 | FileAttributes.System);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "ApplyIcon: Error System Attr '{FolderPath}'", folderPath);
+            }
+
+
+            // 6) Notificar al shell
+            _logger.LogInformation("Notifying shell about changes in {FolderPath}", folderPath);
+            //Thread.Sleep(50);
+            SHChangeNotify(0x00001000, 0x0005, folderPath, IntPtr.Zero);
+            SHChangeNotify(0x00002000, 0x0005, folderPath, IntPtr.Zero);
         }
 
 
@@ -344,6 +437,7 @@ namespace Iconizer.Infrastructure.Services
             //Thread.Sleep(50);
             SHChangeNotify(0x00001000, 0x0005, folderPath, IntPtr.Zero);
             SHChangeNotify(0x00002000, 0x0005, folderPath, IntPtr.Zero);
+            SHChangeNotify(0x08000000, 0x0005, null, IntPtr.Zero);
 
 
         }
