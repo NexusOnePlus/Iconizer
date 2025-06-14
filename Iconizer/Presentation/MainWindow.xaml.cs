@@ -47,7 +47,7 @@ namespace Iconizer.Presentation
             _configService = configService;
             _iconService = iconService;
             _validator = validator;
-            setStart();
+            SetStart();
             LoadConfig();
         }
 
@@ -169,35 +169,29 @@ namespace Iconizer.Presentation
 
             using (var originalBmp = new Bitmap(imagePath))
             {
-                using (var resizedBmp = new Bitmap(originalBmp, new System.Drawing.Size(256, 256)))
-                {
-                    using (var fs = new FileStream(outputIconPath, FileMode.Create))
-                    using (var writer = new BinaryWriter(fs))
-                    {
-                        using (var msPng = new MemoryStream())
-                        {
-                            resizedBmp.Save(msPng, ImageFormat.Png);
-                            byte[] pngBytes = msPng.ToArray();
+                using var resizedBmp = new Bitmap(originalBmp, new System.Drawing.Size(256, 256));
+                using var fs = new FileStream(outputIconPath, FileMode.Create);
+                using var writer = new BinaryWriter(fs);
+                using var msPng = new MemoryStream();
+                resizedBmp.Save(msPng, ImageFormat.Png);
+                byte[] pngBytes = msPng.ToArray();
 
-                            writer.Write((short)0);
-                            writer.Write((short)1);
-                            writer.Write((short)1);
+                writer.Write((short)0);
+                writer.Write((short)1);
+                writer.Write((short)1);
 
-                            writer.Write((byte)(resizedBmp.Width >= 256 ? 0 : resizedBmp.Width));
-                            writer.Write((byte)(resizedBmp.Height >= 256 ? 0 : resizedBmp.Height));
-                            writer.Write((byte)0);
-                            writer.Write((byte)0);
-                            writer.Write((short)1);
-                            writer.Write((short)32);
+                writer.Write((byte)(resizedBmp.Width >= 256 ? 0 : resizedBmp.Width));
+                writer.Write((byte)(resizedBmp.Height >= 256 ? 0 : resizedBmp.Height));
+                writer.Write((byte)0);
+                writer.Write((byte)0);
+                writer.Write((short)1);
+                writer.Write((short)32);
 
-                            writer.Write(pngBytes.Length);
+                writer.Write(pngBytes.Length);
 
-                            writer.Write(22);
+                writer.Write(22);
 
-                            writer.Write(pngBytes);
-                        }
-                    }
-                }
+                writer.Write(pngBytes);
             }
             return outputIconPath;
         }
@@ -208,7 +202,7 @@ namespace Iconizer.Presentation
             Hide();
         }
 
-        private void setStart()
+        private void SetStart()
         {
             string folderPath = Environment.GetFolderPath(Environment.SpecialFolder.Startup);
             string filePath = Path.Combine(folderPath, "Iconizer.lnk");

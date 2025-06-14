@@ -15,18 +15,13 @@ namespace Iconizer.Infrastructure.Services
         IEnumerable<string> GetDesktopFolders();
     }
 
-    public class FileIconService : IFileIconService
+    public class FileIconService(ILogger<FileIconService> logger, IConfigService configDiff) : IFileIconService
     {
-        private readonly ILogger<FileIconService> _logger;
-        private readonly IConfigService _configService;
-        public FileIconService(ILogger<FileIconService> logger, IConfigService configDiff)
-        {
-            _logger = logger;
-            _configService = configDiff;
-        }
+        private readonly ILogger<FileIconService> _logger = logger;
+        private readonly IConfigService _configService = configDiff;
 
         [DllImport("Shell32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        public static extern uint SHGetSetFolderCustomSettings(ref SHFOLDERCUSTOMSETTINGS pfcs, string pszPath, uint dwReadWrite);
+        private static extern uint SHGetSetFolderCustomSettings(ref SHFOLDERCUSTOMSETTINGS pfcs, string pszPath, uint dwReadWrite);
 
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
@@ -63,7 +58,7 @@ namespace Iconizer.Infrastructure.Services
             _logger.LogDebug("Getting desktop folders: {DesktopPath}", desktop);
             return Directory.Exists(desktop)
                 ? Directory.GetDirectories(desktop)
-                : Array.Empty<string>();
+                : [];
         }
 
         public void AssignIconsToFolders(ConfigData config)
@@ -73,7 +68,7 @@ namespace Iconizer.Infrastructure.Services
             ConfigDiff? diffs = _configService.LoadDiff(ConfigPaths.ConfigDiffs);
             if (diffs == null)
             {
-                ConfigDiff newone = new ConfigDiff();
+                ConfigDiff newone = new ();
 
                 _logger.LogInformation("Assigning icons to desktop folders...");
                 foreach (var folder in GetDesktopFolders())
@@ -122,9 +117,9 @@ namespace Iconizer.Infrastructure.Services
             }
             else
             {
-                List<string> fupdate = new List<string>();
+                List<string> fupdate = [];
 
-                List<string> folders = GetDesktopFolders().ToList();
+                List<string> folders = [.. GetDesktopFolders()];
                 for (var i = 0; i < diffs.Targets.Count; i++)
                 {
                     if (config.Files.IndexOf(diffs.Files[i]) > 0)
@@ -212,7 +207,7 @@ namespace Iconizer.Infrastructure.Services
             {
                 ConfigDiff? diffs = _configService.LoadDiff(ConfigPaths.ConfigDiffs);
 
-                ConfigDiff newone = new ConfigDiff();
+                ConfigDiff newone = new();
                 _logger.LogInformation("Assigning icons to desktop folders...");
                 // Obtiene todos los archivos del folder
                 if (!Directory.Exists(folder))
@@ -243,7 +238,7 @@ namespace Iconizer.Infrastructure.Services
                 if (matched && File.Exists(iconPath))
                 {
                     _logger.LogInformation("Applying icon {IconPath} to folder {Folder}", iconPath, folder);
-                    Debug.WriteLine("Applying icon to folder ", iconPath.ToString(), folder);
+                    Debug.WriteLine("Applying icon to folder " +  iconPath.ToString() + folder.ToString());
 
 
                     OnlyIcon(folder, iconPath);
@@ -287,7 +282,6 @@ namespace Iconizer.Infrastructure.Services
         {
             string uniqueName = $"iconizer_{DateTime.Now:yyyyMMddHHmmss}.ico";
             var icoDest = Path.Combine(folderPath, uniqueName);
-            var iniDest = Path.Combine(folderPath, "desktop.ini");
             Debug.WriteLine("OnlyIcon: " + folderPath + " " + sourceIconPath);
 
 
@@ -374,8 +368,7 @@ namespace Iconizer.Infrastructure.Services
         /// </summary>
         private static void SafeDelete(string path, int maxRetries, int delayMs, ILogger? logger)
         {
-            if (logger == null)
-                throw new ArgumentNullException(nameof(logger));
+            ArgumentNullException.ThrowIfNull(logger);
 
             for (int attempt = 0; attempt < maxRetries; attempt++)
             {
@@ -427,16 +420,14 @@ namespace Iconizer.Infrastructure.Services
 
                     var modo = File.Exists(path) ? FileMode.Truncate : FileMode.Create;
 
-                    using (var fs = new FileStream(
+                    using var fs = new FileStream(
                         path,
                         modo,
                         FileAccess.Write,
                         FileShare.ReadWrite
-                    ))
-                    using (var sw = new StreamWriter(fs, encoding))
-                    {
-                        sw.Write(contenido);
-                    }
+                    );
+                    using var sw = new StreamWriter(fs, encoding);
+                    sw.Write(contenido);
 
                     return;
                 }
@@ -472,8 +463,7 @@ namespace Iconizer.Infrastructure.Services
             int maxRetries = 5,
             int delayMs = 100)
         {
-            if (logger == null)
-                throw new ArgumentNullException(nameof(logger));
+            ArgumentNullException.ThrowIfNull(logger);
 
             for (int intento = 1; intento <= maxRetries; intento++)
             {

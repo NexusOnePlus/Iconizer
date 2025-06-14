@@ -23,9 +23,9 @@ namespace Iconizer.Infrastructure.Services
             _desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
             _configService = configService;
             _iconService = iconService;
-            _folderWatchers = new();
-            _pendingUpdate = new();
-            _debounceTokens = new();
+            _folderWatchers = [];
+            _pendingUpdate = [];
+            _debounceTokens = [];
 
             _rootWatcher = new FileSystemWatcher(_desktopPath)
             {
@@ -110,7 +110,6 @@ namespace Iconizer.Infrastructure.Services
                 return true;
             if (string.Equals(fileName, "node_modules", StringComparison.OrdinalIgnoreCase))
                 return true;
-
 
             if (fileName.StartsWith("iconizer_", StringComparison.OrdinalIgnoreCase)
                 && fileName.EndsWith(".ico", StringComparison.OrdinalIgnoreCase))
