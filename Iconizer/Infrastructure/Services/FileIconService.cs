@@ -112,7 +112,7 @@ namespace Iconizer.Infrastructure.Services
                 _logger.LogInformation("Assigning icons to desktop folders...");
                 foreach (var folder in GetDesktopFolders())
                 {
-                    if(fupdate.Contains(folder)) continue;
+                    if (fupdate.Contains(folder)) continue;
                     Debug.WriteLine(folder, " -- Not Ignored");
                     // Obtiene todos los archivos del folder
                     var files = Directory.GetFiles(folder, "*.*", SearchOption.TopDirectoryOnly);
@@ -150,9 +150,9 @@ namespace Iconizer.Infrastructure.Services
                             }
                             else
                             {
-                            diffs.Targets.Add(folder);
-                            diffs.Icons.Add(iconPath);
-                            diffs.Files.Add(patterstaken);
+                                diffs.Targets.Add(folder);
+                                diffs.Icons.Add(iconPath);
+                                diffs.Files.Add(patterstaken);
                             }
                         }
                         else
@@ -168,7 +168,7 @@ namespace Iconizer.Infrastructure.Services
 
                 }
             }
-            Task.Delay(5000).Wait();
+            Task.Delay(1000).Wait();
 
             SHChangeNotify(0x08000000, 0x1000, null, IntPtr.Zero);
 
@@ -178,7 +178,7 @@ namespace Iconizer.Infrastructure.Services
 
         public void ApplyOneFolder(string folder, ConfigData config)
         {
-            Debug.WriteLine(folder, "  --   OneFOlder");
+            Debug.WriteLine("OneFOlder: " + folder);
             if (config != null)
             {
                 ConfigDiff? diffs = _configService.LoadDiff(ConfigPaths.ConfigDiffs);
@@ -186,14 +186,17 @@ namespace Iconizer.Infrastructure.Services
                 ConfigDiff newone = new ConfigDiff();
                 _logger.LogInformation("Assigning icons to desktop folders...");
                 // Obtiene todos los archivos del folder
+                if (!Directory.Exists(folder))
+                {
+                    _logger.LogWarning("ApplyOneFolder: la carpeta no existe: {Folder}", folder);
+                    return;
+                }
                 var files = Directory.GetFiles(folder, "*.*", SearchOption.TopDirectoryOnly);
                 var matched = false;
                 var patterstaken = string.Empty;
                 string iconPath = null!;
 
                 // Busca el primer patrón que encaje
-                if (config != null)
-                {
                     for (var i = 0; i < config.Files.Count; i++)
                     {
                         _logger.LogDebug("Processing folder: {Folder}", folder);
@@ -211,6 +214,9 @@ namespace Iconizer.Infrastructure.Services
                     if (matched && File.Exists(iconPath))
                     {
                         _logger.LogInformation("Applying icon {IconPath} to folder {Folder}", iconPath, folder);
+                        Debug.WriteLine("Applying icon to folder ", iconPath.ToString(), folder);
+
+
                         ApplyIcon(folder, iconPath);
                         if (diffs == null)
                         {
@@ -242,7 +248,8 @@ namespace Iconizer.Infrastructure.Services
                         // Si no coincide ningún patrón, elimina cualquier ícono anterior
                         RemoveIconConfig(folder);
                     }
-                }
+
+                SHChangeNotify(0x00002000, 0x0005, folder, IntPtr.Zero);
             }
         }
 
@@ -282,7 +289,6 @@ namespace Iconizer.Infrastructure.Services
             _logger.LogDebug("Copying icon from {SourceIconPath} to {IcoDest}", sourceIconPath, icoDest);
             SafeCopy(sourceIconPath, icoDest, overwrite: true, logger: _logger);
 
-            Thread.Sleep(50);
 
             _logger.LogDebug("Preparing desktop.ini at {IniDest}", iniDest);
             var iniContent = $"[.ShellClassInfo]\r\nIconResource={uniqueName},0\r\n";
@@ -336,8 +342,8 @@ namespace Iconizer.Infrastructure.Services
             // 6) Notificar al shell
             _logger.LogInformation("Notifying shell about changes in {FolderPath}", folderPath);
             //Thread.Sleep(50);
-            //SHChangeNotify(0x00002000, 0x0005, folderPath, IntPtr.Zero);
             SHChangeNotify(0x00001000, 0x0005, folderPath, IntPtr.Zero);
+            SHChangeNotify(0x00002000, 0x0005, folderPath, IntPtr.Zero);
 
 
         }

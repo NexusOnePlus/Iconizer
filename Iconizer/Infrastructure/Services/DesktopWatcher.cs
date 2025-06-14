@@ -1,4 +1,5 @@
 
+using System.Diagnostics;
 using System.IO;
 using Iconizer.Application.Services;
 
@@ -74,7 +75,7 @@ namespace Iconizer.Infrastructure.Services
         private void AddFolderWatcherAsync(string folder)
         {
             if (!Directory.Exists(folder) || _folderWatchers.ContainsKey(folder)) return;
-
+            Debug.WriteLine($"Adding watcher for folder: {folder}");
             // Aplica ícono inicial o remueve
             var config = _configService.Load(ConfigPaths.ConfigFilePath);
             //_iconService.AssignIconsToFolders(config!);
@@ -90,7 +91,8 @@ namespace Iconizer.Infrastructure.Services
             fsw.Created += async (sender, e) =>
             {
                 string name = Path.GetFileName(e.FullPath);
-                if(IgnoreFile(name)) return;
+                if (IgnoreFile(name)) return;
+                Debug.WriteLine($"File created: {name} in {folder}");
                 await Debounce(folder);
             };
             fsw.Deleted += async (sender, e) => {
@@ -98,6 +100,14 @@ namespace Iconizer.Infrastructure.Services
                 if (IgnoreFile(name)) return;
                 await Debounce(folder);
                 };
+            fsw.Renamed += async (s, e) =>
+            {
+                var name = Path.GetFileName(e.FullPath);
+                if (IgnoreFile(name)) return;
+                Debug.WriteLine($"File renamed: {e.OldName} → {e.Name} in {folder}");
+                await Debounce(folder);
+            };
+
             fsw.EnableRaisingEvents = true;
 
             _folderWatchers[folder] = fsw;
@@ -123,6 +133,8 @@ namespace Iconizer.Infrastructure.Services
             {
                 watcher.Dispose();
                 _folderWatchers.Remove(folder);
+                Debug.WriteLine($"Removing watcher for folder: {folder}");
+
             }
         }
 
@@ -143,7 +155,7 @@ namespace Iconizer.Infrastructure.Services
             try
             {
                 
-                await Task.Delay(TimeSpan.FromSeconds(10), cts.Token);
+                await Task.Delay(TimeSpan.FromSeconds(2), cts.Token);
                 DisableAllWatchers();
                 try
                 {
