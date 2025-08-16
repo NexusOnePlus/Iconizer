@@ -148,7 +148,7 @@
                         VerticalAlignment="Center"
                         Background="#3c434b"
                         Click="AddButton_OnClick"
-                        Content="Add" />
+                        Content="Add new rule" />
             </Grid>
         </Grid>
     </Border>
