@@ -63,9 +63,7 @@ jobs:
         name: ${{ github.event.inputs.release_title != '' && github.event.inputs.release_title || format('Release v{0}', github.event.inputs.version) }}
         body: |
             ${{ github.event.inputs.release_notes }}
-        files: |
-            Releases/Iconizer-win-Portable.zip
-            Releases/Iconizer-win-Setup.exe
+        files: Releases/*
       env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
