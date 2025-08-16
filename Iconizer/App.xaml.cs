@@ -25,7 +25,7 @@ namespace Iconizer
             {
                 if (!createdNew)
                 {
-                    MessageBox.Show("App already running.", "Single instance", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show("App already running.", "Unique instance", MessageBoxButton.OK, MessageBoxImage.Information);
                     return;
                 }
 
