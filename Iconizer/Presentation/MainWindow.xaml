@@ -26,12 +26,36 @@
                     <ColumnDefinition />
                     <ColumnDefinition />
                 </Grid.ColumnDefinitions>
-                <TextBlock
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock
                     Grid.Row="0"
                     VerticalAlignment="Center"
 
-                    Foreground="White" Name="TbHello" Text="Iconizer Settings"
+                    Foreground="White" Name="TbHello" Text="Iconizer"
                     FontSize="28" FontWeight="SemiBold" HorizontalAlignment="Left" />
+                    <Grid Grid.Column="1">
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Orientation="Horizontal">
+                            <TextBlock x:Name="VersionText" 
+                            Text="V" 
+                            Foreground="White" 
+                            Opacity="0.7"
+                            FontSize="15"
+                            VerticalAlignment="Center"/>
+                            
+                            <Button x:Name="UpdateButton" 
+                            Content="Update"
+                            Click="UpdateButton_Click"
+                            Margin="16,0,0,0"
+                            Background="#3c434b"
+                            FontSize="15"
+                            Padding="5,3"/>
+                        </StackPanel>
+                    </Grid>
+                </Grid>
                 <Button Grid.Column="1" Name="LoadIcons" Width="110" Height="30"
                         HorizontalAlignment="Center"
                         Foreground="Black"

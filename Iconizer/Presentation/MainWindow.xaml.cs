@@ -25,6 +25,9 @@ using Microsoft.Extensions.Logging;
 using System.Windows.Forms;
 using File = System.IO.File;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
+using Velopack;
+using System.Reflection;
+using MessageBox = System.Windows.MessageBox;
 
 namespace Iconizer.Presentation
 {
@@ -34,21 +37,75 @@ namespace Iconizer.Presentation
         private readonly IIconAssignmentService _iconService;
         private readonly IExtensionValidator _validator;
         private readonly ILogger<MainWindow> _logger;
-
+        private readonly UpdateManager _updateManager;
 
         public MainWindow(
             IConfigService configService,
             IIconAssignmentService iconService,
-            IExtensionValidator validator, ILogger<MainWindow> logger)
+            IExtensionValidator validator, ILogger<MainWindow> logger, UpdateManager updateManager)
         {
             InitializeComponent();
 
             _logger = logger;
             _configService = configService;
             _iconService = iconService;
+            _updateManager = updateManager;
             _validator = validator;
+
+            DisplayVersion();
+
             SetStart();
             LoadConfig();
+        }
+
+        public void DisplayVersion()
+        {
+            string version;
+            if (_updateManager.IsInstalled)
+            {
+                version = _updateManager.CurrentVersion?.ToString() ?? "Unknown";
+            }
+            else
+            {
+                version = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "Debug";
+            }
+            VersionText.Text = $"v{version}";
+        }
+
+        private async void UpdateButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                UpdateButton.IsEnabled = false;
+                UpdateButton.Content = "Checking...";
+
+                if (!_updateManager.IsInstalled)
+                {
+                    MessageBox.Show("Updates can only be checked in an installed version of the application.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
+                var newVersion = await _updateManager.CheckForUpdatesAsync();
+                if (newVersion == null)
+                {
+                    MessageBox.Show("Your application is up to date.", "No Updates", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
+                UpdateButton.Content = "Downloading...";
+                await _updateManager.DownloadUpdatesAsync(newVersion);
+
+                _updateManager.ApplyUpdatesAndRestart(newVersion);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred while checking for updates: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                UpdateButton.IsEnabled = true;
+                UpdateButton.Content = "Check";
+            }
         }
 
         private void LoadConfig()

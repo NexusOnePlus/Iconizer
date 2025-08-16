@@ -1,5 +1,4 @@
-﻿
-using Iconizer.Application.Services;
+﻿using Iconizer.Application.Services;
 using Iconizer.Application.Validators;
 using Iconizer.Infrastructure.Services;
 using Iconizer.Presentation;
@@ -56,7 +55,7 @@ namespace Iconizer
         {
             base.OnStartup(e);
 
-            await UpdateApp();
+           // await UpdateApp();
 
             var services = new ServiceCollection();
             // Application
@@ -68,6 +67,7 @@ namespace Iconizer
             services.AddSingleton<IFileIconService, FileIconService>();
             services.AddSingleton<ICleaner, Cleaner>();
             services.AddSingleton<MainWindow>();
+            services.AddSingleton<UpdateManager>(sp => new UpdateManager("https://github.com/NexusOnePlus/Iconizer"));
             services.AddLogging(builder =>
             {
                 builder.AddConsole();
