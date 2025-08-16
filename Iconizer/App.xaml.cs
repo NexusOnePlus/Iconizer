@@ -7,6 +7,7 @@ using Infrastructure.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Windows;
+using System;
 using Velopack;
 
 namespace Iconizer
@@ -15,11 +16,47 @@ namespace Iconizer
     {
         private IServiceProvider? _provider;
         private ITrayIconService? _trayService;
+
+        [STAThread]
+        private static void Main(string[] args)
+        {
+            try
+            {
+                VelopackApp.Build().Run();
+
+                var app = new App();
+                app.InitializeComponent();
+                app.Run();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Fatal error on startup runtime: {ex.Message}", "Start failed", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        protected static async Task UpdateApp()
+        {
+            var mgr = new UpdateManager("https://github.com/NexusOnePlus/Iconizer");
+
+            if (!mgr.IsInstalled)
+            {
+                return;
+            }
+
+            var newVersion = await mgr.CheckForUpdatesAsync();
+            if (newVersion == null)
+                return;
+
+            await mgr.DownloadUpdatesAsync(newVersion);
+
+            mgr.ApplyUpdatesAndRestart(newVersion);
+        }
+
         protected override async void OnStartup(StartupEventArgs e)
         {
-            VelopackApp.Build().Run();
             base.OnStartup(e);
 
+            await UpdateApp();
 
             var services = new ServiceCollection();
             // Application

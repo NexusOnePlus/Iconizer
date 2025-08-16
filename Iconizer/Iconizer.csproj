@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
+		<StartupObject>Iconizer.App</StartupObject>
         <OutputType>WinExe</OutputType>
         <TargetFramework>net9.0-windows</TargetFramework>
         <RuntimeIdentifiers>win-x64;win-x86</RuntimeIdentifiers>
@@ -21,6 +22,12 @@
             <SubType>Designer</SubType>
         </Page>
     </ItemGroup>
+
+	<ItemGroup>
+		<ApplicationDefinition Remove="App.xaml"/>
+		<Page Include="App.xaml"/>
+	</ItemGroup>
+	
 
     <ItemGroup>
         <Resource Include="Assets\extension_icon.ico" />
