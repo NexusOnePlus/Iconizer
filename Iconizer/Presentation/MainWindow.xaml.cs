@@ -74,6 +74,8 @@ namespace Iconizer.Presentation
 
         private async void UpdateButton_Click(object sender, RoutedEventArgs e)
         {
+            var source = new Velopack.Sources.GithubSource("https://github.com/NexusOnePlus/Iconizer", "", true);
+            var updateManager = new UpdateManager(source);
             try
             {
                 UpdateButton.IsEnabled = false;
@@ -85,21 +87,45 @@ namespace Iconizer.Presentation
                     return;
                 }
 
-                var newVersion = await _updateManager.CheckForUpdatesAsync();
-                if (newVersion == null)
+                try
                 {
-                    MessageBox.Show("Your application is up to date.", "No Updates", MessageBoxButton.OK, MessageBoxImage.Information);
+                    var newVersion = await _updateManager.CheckForUpdatesAsync();
+                    if (newVersion == null)
+                    {
+                        MessageBox.Show("Your application is up to date.", "No Updates", MessageBoxButton.OK, MessageBoxImage.Information);
+                        return;
+                    }
+
+                    UpdateButton.Content = "Downloading...";
+                    try
+                    {
+                        await _updateManager.DownloadUpdatesAsync(newVersion);
+                    }
+                    catch (Exception exDownload)
+                    {
+                        MessageBox.Show($"Error during download:\n{exDownload}", "Download Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
+                    }
+
+                    try
+                    {
+                        _updateManager.ApplyUpdatesAndRestart(newVersion);
+                    }
+                    catch (Exception exApply)
+                    {
+                        MessageBox.Show($"Error applying update:\n{exApply}", "Apply Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
+                    }
+                }
+                catch (Exception exCheck)
+                {
+                    MessageBox.Show($"Error checking for updates:\n{exCheck}", "Check Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
-
-                UpdateButton.Content = "Downloading...";
-                await _updateManager.DownloadUpdatesAsync(newVersion);
-
-                _updateManager.ApplyUpdatesAndRestart(newVersion);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"An error occurred while checking for updates: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"General error in update process:\n{ex}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {

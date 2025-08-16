@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using System.Windows;
 using System;
 using Velopack;
+using Velopack.Sources;
 
 namespace Iconizer
 {
@@ -33,29 +34,11 @@ namespace Iconizer
             }
         }
 
-        protected static async Task UpdateApp()
-        {
-            var mgr = new UpdateManager("https://github.com/NexusOnePlus/Iconizer");
-
-            if (!mgr.IsInstalled)
-            {
-                return;
-            }
-
-            var newVersion = await mgr.CheckForUpdatesAsync();
-            if (newVersion == null)
-                return;
-
-            await mgr.DownloadUpdatesAsync(newVersion);
-
-            mgr.ApplyUpdatesAndRestart(newVersion);
-        }
+        
 
         protected override async void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
-
-           // await UpdateApp();
 
             var services = new ServiceCollection();
             // Application
@@ -67,7 +50,7 @@ namespace Iconizer
             services.AddSingleton<IFileIconService, FileIconService>();
             services.AddSingleton<ICleaner, Cleaner>();
             services.AddSingleton<MainWindow>();
-            services.AddSingleton<UpdateManager>(sp => new UpdateManager("https://github.com/NexusOnePlus/Iconizer"));
+            services.AddSingleton<UpdateManager>(sp => new UpdateManager(new GithubSource("https://github.com/NexusOnePlus/Iconizer", "", true)));
             services.AddLogging(builder =>
             {
                 builder.AddConsole();
