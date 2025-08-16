@@ -50,7 +50,6 @@ namespace Iconizer
             services.AddSingleton<IFileIconService, FileIconService>();
             services.AddSingleton<ICleaner, Cleaner>();
             services.AddSingleton<MainWindow>();
-            services.AddSingleton<UpdateManager>(sp => new UpdateManager(new GithubSource("https://github.com/NexusOnePlus/Iconizer", "", true)));
             services.AddLogging(builder =>
             {
                 builder.AddConsole();

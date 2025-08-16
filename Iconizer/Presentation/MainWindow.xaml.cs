@@ -37,19 +37,17 @@ namespace Iconizer.Presentation
         private readonly IIconAssignmentService _iconService;
         private readonly IExtensionValidator _validator;
         private readonly ILogger<MainWindow> _logger;
-        private readonly UpdateManager _updateManager;
 
         public MainWindow(
             IConfigService configService,
             IIconAssignmentService iconService,
-            IExtensionValidator validator, ILogger<MainWindow> logger, UpdateManager updateManager)
+            IExtensionValidator validator, ILogger<MainWindow> logger)
         {
             InitializeComponent();
 
             _logger = logger;
             _configService = configService;
             _iconService = iconService;
-            _updateManager = updateManager;
             _validator = validator;
 
             DisplayVersion();
@@ -60,10 +58,13 @@ namespace Iconizer.Presentation
 
         public void DisplayVersion()
         {
+            var token = "";
+            var source = new Velopack.Sources.GithubSource("https://github.com/NexusOnePlus/Iconizer", token, true);
+            var updateManager = new UpdateManager(source);
             string version;
-            if (_updateManager.IsInstalled)
+            if (updateManager.IsInstalled)
             {
-                version = _updateManager.CurrentVersion?.ToString() ?? "Unknown";
+                version = updateManager.CurrentVersion?.ToString() ?? "Unknown";
             }
             else
             {
@@ -74,14 +75,15 @@ namespace Iconizer.Presentation
 
         private async void UpdateButton_Click(object sender, RoutedEventArgs e)
         {
-            var source = new Velopack.Sources.GithubSource("https://github.com/NexusOnePlus/Iconizer", "", true);
+            var token = "";
+            var source = new Velopack.Sources.GithubSource("https://github.com/NexusOnePlus/Iconizer", token, true);
             var updateManager = new UpdateManager(source);
             try
             {
                 UpdateButton.IsEnabled = false;
                 UpdateButton.Content = "Checking...";
 
-                if (!_updateManager.IsInstalled)
+                if (!updateManager.IsInstalled)
                 {
                     MessageBox.Show("Updates can only be checked in an installed version of the application.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
                     return;
@@ -89,7 +91,7 @@ namespace Iconizer.Presentation
 
                 try
                 {
-                    var newVersion = await _updateManager.CheckForUpdatesAsync();
+                    var newVersion = await updateManager.CheckForUpdatesAsync();
                     if (newVersion == null)
                     {
                         MessageBox.Show("Your application is up to date.", "No Updates", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -99,7 +101,7 @@ namespace Iconizer.Presentation
                     UpdateButton.Content = "Downloading...";
                     try
                     {
-                        await _updateManager.DownloadUpdatesAsync(newVersion);
+                        await updateManager.DownloadUpdatesAsync(newVersion);
                     }
                     catch (Exception exDownload)
                     {
@@ -109,7 +111,7 @@ namespace Iconizer.Presentation
 
                     try
                     {
-                        _updateManager.ApplyUpdatesAndRestart(newVersion);
+                        updateManager.ApplyUpdatesAndRestart(newVersion);
                     }
                     catch (Exception exApply)
                     {
